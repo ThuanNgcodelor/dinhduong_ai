@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html class="light" lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{fragments/head :: common-head}">
+    <title>Cài Đặt Tài Khoản - Zader Food</title>
+</head>
+
+<body class="font-display bg-smart-white dark:bg-background-dark text-dark-ink">
+
+    <th:block th:replace="~{fragments/toast :: toast-system}"></th:block>
+
+    <th:block th:replace="~{fragments/navbar :: header_nav}"></th:block>
+
+    <div class="relative flex min-h-screen w-full flex-col group/design-root overflow-x-hidden">
+
+        <main class="flex h-full grow flex-col py-10 md:py-20">
+            <div class="container mx-auto px-4">
+                <div class="mx-auto flex max-w-5xl flex-col gap-8">
+                    <h1 class="text-dark-ink text-4xl font-black leading-tight tracking-[-0.033em] text-center">Cài Đặt
+                        Cá Nhân</h1>
+
+                    <div th:if="${successMessage}"
+                        class="hidden p-4 mb-2 text-sm text-green-800 rounded-lg bg-green-50 flex items-center gap-2"
+                        role="alert">
+                        <span class="material-symbols-outlined text-lg">check_circle</span>
+                        <div><span class="font-medium">Thành công!</span> <span th:text="${successMessage}"></span>
+                        </div>
+                    </div>
+
+                    <div class="bg-card-white rounded-xl shadow-subtle p-6 md:p-10">
+                        <form th:action="@{/user/settings}" th:object="${userProfileDTO}" method="post">
+                            <div class="flex flex-col gap-10">
+
+                                <div class="flex flex-col gap-6">
+                                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4">
+                                        <div>
+                                            <h3 class="text-dark-ink text-xl font-bold leading-tight">Mục Tiêu & Tổng
+                                                Quan Dinh Dưỡng</h3>
+                                            <p class="text-soft-grey text-sm mt-1">Được quản lý bởi Công Cụ Tính AI dựa
+                                                trên chỉ số cơ thể của bạn.</p>
+                                        </div>
+                                    </div>
+
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                        <div
+                                            class="relative overflow-hidden rounded-xl bg-gradient-to-br from-chef-orange/5 to-chef-orange/10 border border-chef-orange/20 p-6">
+                                            <div class="flex items-center gap-3 mb-2">
+                                                <div class="p-2 bg-white rounded-full shadow-sm text-chef-orange">
+                                                    <span class="material-symbols-outlined text-xl block">flag</span>
+                                                </div>
+                                                <span
+                                                    class="text-sm font-bold text-dark-ink uppercase tracking-wider">Mục
+                                                    Tiêu Hàng Ngày</span>
+                                            </div>
+                                            <div class="flex items-baseline gap-1 mt-2">
+                                                <input type="number" th:field="*{calorieGoalPerDay}"
+                                                    class="bg-transparent border-0 border-b-2 border-chef-orange/50 focus:border-chef-orange focus:ring-0 text-3xl font-black text-chef-orange w-32 p-0 m-0 leading-none placeholder-chef-orange/30"
+                                                    placeholder="2000">
+                                                <span class="text-sm font-medium text-soft-grey">kcal</span>
+                                            </div>
+                                            <p class="text-xs text-soft-grey mt-3">Mục tiêu calo để đạt được kết quả của
+                                                bạn.</p>
+                                        </div>
+
+                                        <div
+                                            class="relative overflow-hidden rounded-xl bg-gray-50 border border-gray-200 p-6">
+                                            <div class="flex items-center gap-3 mb-2">
+                                                <div class="p-2 bg-white rounded-full shadow-sm text-protein-blue">
+                                                    <span
+                                                        class="material-symbols-outlined text-xl block">local_fire_department</span>
+                                                </div>
+                                                <span
+                                                    class="text-sm font-bold text-soft-grey uppercase tracking-wider">TDEE
+                                                    (Duy trì)</span>
+                                            </div>
+                                            <div class="flex items-baseline gap-1 mt-2">
+                                                <span class="text-2xl font-bold text-dark-ink"
+                                                    th:text="${userProfileDTO.tdee != null ? userProfileDTO.tdee : '---'}">---</span>
+                                                <span class="text-xs font-medium text-soft-grey">kcal</span>
+                                            </div>
+                                            <p class="text-xs text-soft-grey mt-3">Năng lượng bạn đốt cháy mỗi ngày.</p>
+                                            <input type="hidden" th:field="*{tdee}">
+                                        </div>
+
+                                        <div
+                                            class="relative overflow-hidden rounded-xl bg-gray-50 border border-gray-200 p-6">
+                                            <div class="flex items-center gap-3 mb-2">
+                                                <div class="p-2 bg-white rounded-full shadow-sm text-purple-500">
+                                                    <span
+                                                        class="material-symbols-outlined text-xl block">vital_signs</span>
+                                                </div>
+                                                <span
+                                                    class="text-sm font-bold text-soft-grey uppercase tracking-wider">BMR
+                                                    (Tỷ lệ trao đổi chất)</span>
+                                            </div>
+                                            <div class="flex items-baseline gap-1 mt-2">
+                                                <span class="text-2xl font-bold text-dark-ink"
+                                                    th:text="${userProfileDTO.bmr != null ? userProfileDTO.bmr : '---'}">---</span>
+                                                <span class="text-xs font-medium text-soft-grey">kcal</span>
+                                            </div>
+                                            <p class="text-xs text-soft-grey mt-3">Năng lượng đốt cháy khi nghỉ ngơi.
+                                            </p>
+                                            <input type="hidden" th:field="*{bmr}">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="flex flex-col gap-6 pt-8 border-t border-gray-100">
+                                    <h3 class="text-dark-ink text-lg font-bold leading-tight">Thông Tin Cá Nhân</h3>
+
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <label class="flex flex-col gap-2">
+                                            <span class="text-dark-ink text-sm font-medium">Họ và Tên</span>
+                                            <input th:field="*{fullName}"
+                                                class="form-input flex w-full rounded-lg text-dark-ink bg-card-white border border-smart-mist h-12 px-4 focus:border-primary focus:ring-1 focus:ring-primary" />
+                                        </label>
+                                        <label class="flex flex-col gap-2">
+                                            <span class="text-dark-ink text-sm font-medium">Địa chỉ Email</span>
+                                            <input th:field="*{email}" readonly
+                                                class="form-input flex w-full rounded-lg text-soft-grey bg-gray-100 border border-smart-mist h-12 px-4 cursor-not-allowed" />
+                                        </label>
+                                    </div>
+
+                                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                                        <label class="flex flex-col gap-2 md:col-span-2">
+                                            <span class="text-dark-ink text-sm font-medium">Ngày Sinh</span>
+                                            <input type="date" th:field="*{birthDate}"
+                                                class="form-input flex w-full rounded-lg text-dark-ink bg-card-white border border-smart-mist h-12 px-4 focus:border-primary focus:ring-1 focus:ring-primary" />
+                                        </label>
+                                        <label class="flex flex-col gap-2">
+                                            <span class="text-dark-ink text-sm font-medium">Giới Tính</span>
+                                            <select th:field="*{gender}"
+                                                class="form-select flex w-full rounded-lg text-dark-ink bg-card-white border border-smart-mist h-12 px-4 focus:border-primary focus:ring-1 focus:ring-primary">
+                                                <option value="">Chọn</option>
+                                                <option value="MALE">Nam</option>
+                                                <option value="FEMALE">Nữ</option>
+                                                <option value="OTHER">Khác</option>
+                                            </select>
+                                        </label>
+                                    </div>
+
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <label class="flex flex-col gap-2">
+                                            <span class="text-dark-ink text-sm font-medium">Cân Nặng (Kg)</span>
+                                            <input type="number" step="0.1" th:field="*{weightKg}"
+                                                class="form-input flex w-full rounded-lg text-dark-ink bg-card-white border border-smart-mist h-12 px-4 focus:border-primary focus:ring-1 focus:ring-primary" />
+                                        </label>
+                                        <label class="flex flex-col gap-2">
+                                            <span class="text-dark-ink text-sm font-medium">Chiều Cao (Cm)</span>
+                                            <input type="number" step="0.1" th:field="*{heightCm}"
+                                                class="form-input flex w-full rounded-lg text-dark-ink bg-card-white border border-smart-mist h-12 px-4 focus:border-primary focus:ring-1 focus:ring-primary" />
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="mt-6 p-6 bg-blue-50/50 rounded-xl border border-blue-100 relative">
+                                    <h4
+                                        class="font-bold text-dark-ink text-sm uppercase tracking-wide mb-4 flex items-center gap-2">
+                                        <span class="material-symbols-outlined text-blue-600">flag</span> Thiết Lập Mục
+                                        Tiêu Cụ Thể
+                                    </h4>
+
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6"> <label
+                                            class="flex flex-col gap-2">
+                                            <span class="text-dark-ink text-sm font-medium">Mục Tiêu Cân Nặng
+                                                (Kg)</span>
+                                            <input type="number" step="0.1" th:field="*{targetWeightKg}"
+                                                id="targetWeightInput"
+                                                class="form-input rounded-lg border-smart-mist h-12 px-4 focus:border-blue-500 focus:ring-blue-500"
+                                                placeholder="e.g. 65.5" />
+                                        </label>
+
+                                        <label class="flex flex-col gap-2">
+                                            <span class="text-dark-ink text-sm font-medium">Ngày Bắt Đầu</span>
+                                            <input type="date" th:field="*{startDate}" id="startDateInput"
+                                                class="form-input rounded-lg border-smart-mist h-12 px-4 focus:border-blue-500 focus:ring-blue-500" />
+                                        </label>
+
+                                        <label class="flex flex-col gap-2">
+                                            <span class="text-dark-ink text-sm font-medium">Ngày Mục Tiêu</span>
+                                            <input type="date" th:field="*{targetDate}" id="targetDateInput"
+                                                class="form-input rounded-lg border-smart-mist h-12 px-4 focus:border-blue-500 focus:ring-blue-500" />
+                                        </label>
+                                    </div>
+
+                                    <div id="goalWarning"
+                                        class="hidden mt-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm flex items-start gap-2">
+                                        <span class="material-symbols-outlined text-lg mt-0.5">warning</span>
+                                        <div>
+                                            <strong class="block font-bold">Cảnh Báo Mục Tiêu Không Thực Tế!</strong>
+                                            <span id="goalWarningText">Bạn đang cố gắng giảm cân quá nhanh.</span>
+                                        </div>
+                                    </div>
+
+                                    <div id="goalInfo"
+                                        class="hidden mt-4 p-3 bg-green-100 text-green-700 rounded-lg text-sm flex items-start gap-2 flex items-center">
+                                        <span class="material-symbols-outlined text-lg mt-0.5">info</span>
+                                        <span id="goalInfoText">Tốc độ bình thường.</span>
+                                    </div>
+                                </div>
+
+                                <div class="flex flex-col gap-6 pt-8 border-t border-gray-100">
+                                    <div class="flex flex-col gap-2">
+                                        <h3 class="text-dark-ink text-lg font-bold leading-tight">Sở Thích Ăn Kiêng</h3>
+                                        <p class="text-soft-grey text-sm">Chọn tất cả các mục phù hợp để chúng tôi gợi ý
+                                            công thức tốt hơn.</p>
+                                    </div>
+                                    <div class="flex flex-wrap gap-3">
+                                        <th:block th:each="type : ${allDietTypes}">
+                                            <label class="cursor-pointer relative group">
+                                                <input type="checkbox" th:field="*{dietaryPreferences}"
+                                                    th:value="${type}" class="peer sr-only" />
+                                                <span class="flex items-center justify-center rounded-full border border-smart-mist bg-white px-4 py-2 text-sm font-medium text-soft-grey transition-all 
+                                                      peer-checked:bg-nutri-green peer-checked:text-white peer-checked:border-nutri-green peer-checked:shadow-md
+                                                      group-hover:border-nutri-green/50">
+                                                    <span
+                                                        th:text="${#strings.capitalize(#strings.toLowerCase(type.name().replace('_', ' ')))}">Diet
+                                                        Name</span>
+                                                </span>
+                                            </label>
+                                        </th:block>
+                                    </div>
+                                </div>
+
+                                <div class="flex flex-col gap-6 pt-8 border-t border-gray-100">
+                                    <div class="flex flex-col gap-2">
+                                        <h3 class="text-dark-ink text-lg font-bold leading-tight">Mức Độ Hoạt Động</h3>
+                                        <p class="text-soft-grey text-sm">
+                                            Mức độ hoạt động hàng ngày của bạn như thế nào?
+                                        </p>
+                                    </div>
+                                    <div class="flex flex-wrap gap-3">
+                                        <th:block th:each="level : ${allActivityLevels}">
+                                            <label class="cursor-pointer relative group"
+                                                onmouseover="showDescription(this.getAttribute('data-type'), 'activity-helper')"
+                                                onmouseout="clearDescription('activity-helper')"
+                                                th:attr="data-type=${level.name()}">
+
+                                                <input type="radio" th:field="*{activityLevel}" th:value="${level}"
+                                                    class="peer sr-only" />
+
+                                                <span class="flex items-center justify-center rounded-full border border-smart-mist bg-white px-4 py-2 text-sm font-medium text-soft-grey transition-all 
+                                                      peer-checked:bg-purple-600 peer-checked:text-white peer-checked:border-purple-600 peer-checked:shadow-md
+                                                      group-hover:border-purple-600/50 group-hover:text-purple-600">
+                                                    <span
+                                                        th:text="${#strings.capitalize(#strings.toLowerCase(level.name().replace('_', ' ')))}">Level
+                                                        Name</span>
+                                                </span>
+                                            </label>
+                                        </th:block>
+                                    </div>
+                                </div>
+
+                                <div class="flex flex-col gap-6 pt-8 border-t border-gray-100">
+                                    <div class="flex flex-col gap-2">
+                                        <h3 class="text-dark-ink text-lg font-bold leading-tight">Mục Tiêu Chính</h3>
+                                        <p class="text-soft-grey text-sm">Chọn mục tiêu chính để AI tính toán kế hoạch
+                                            tốt hơn.</p>
+                                    </div>
+                                    <div class="flex flex-wrap gap-3">
+                                        <th:block th:each="goalItem : ${allGoals}">
+                                            <label class="cursor-pointer relative group">
+                                                <input type="radio" th:field="*{goal}" th:value="${goalItem}"
+                                                    class="peer sr-only" />
+
+                                                <span class="flex items-center justify-center rounded-full border border-smart-mist bg-white px-4 py-2 text-sm font-medium text-soft-grey transition-all 
+                                                      peer-checked:bg-chef-orange peer-checked:text-white peer-checked:border-chef-orange peer-checked:shadow-md
+                                                      group-hover:border-chef-orange/50">
+
+                                                    <span
+                                                        th:text="${#strings.capitalize(#strings.toLowerCase(goalItem.name().replace('_', ' ')))}">Goal
+                                                        Name</span>
+                                                </span>
+                                            </label>
+                                        </th:block>
+                                    </div>
+                                </div>
+
+                                <div class="flex flex-col gap-6 pt-8 border-t border-gray-100">
+                                    <h3 class="text-dark-ink text-lg font-bold leading-tight">Dị Ứng & Ghi Chú</h3>
+                                    <label class="flex flex-col gap-2">
+                                        <span class="text-dark-ink text-sm font-medium">Dị Ứng (Cách khoảng bằng dấu
+                                            phẩy)</span>
+                                        <textarea th:field="*{allergies}" rows="3"
+                                            placeholder="e.g. Peanuts, Shellfish, Dairy..."
+                                            class="form-input flex w-full rounded-lg text-dark-ink bg-card-white border border-smart-mist p-4 focus:border-primary focus:ring-1 focus:ring-primary"></textarea>
+                                    </label>
+
+                                    <div class="pt-8 flex flex-col sm:flex-row-reverse gap-4">
+                                        <button type="submit"
+                                            class="flex w-full sm:w-auto min-w-[120px] cursor-pointer items-center justify-center rounded-lg h-12 px-6 bg-chef-orange text-white text-base font-bold shadow-lg shadow-chef-orange/20 hover:bg-chef-orange/90 hover:shadow-xl transition-all">
+                                            Lưu Thay Đổi
+                                        </button>
+                                        <button type="reset"
+                                            class="flex w-full sm:w-auto min-w-[100px] cursor-pointer items-center justify-center rounded-lg h-12 px-6 bg-gray-100 text-soft-grey text-base font-bold hover:bg-gray-200 transition-all">
+                                            Hủy
+                                        </button>
+                                    </div>
+                                </div>
+                        </form>
+
+                        <div id="security-section" class="border-t border-gray-200 pt-10 mt-10">
+                            <h3 class="text-dark-ink text-lg font-bold mb-6 flex items-center gap-2">
+                                <span class="material-symbols-outlined text-soft-grey">lock</span>
+                                Bảo Mật & Mật Khẩu
+                            </h3>
+                            <form th:action="@{/user/change-password}" th:object="${changePasswordDTO}" method="post">
+                                <div class="flex flex-col gap-6">
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                        <label class="flex flex-col gap-2">
+                                            <span class="text-dark-ink text-sm font-medium">Mật Khẩu Hiện Tại</span>
+                                            <input type="password" th:field="*{currentPassword}" required
+                                                class="form-input flex w-full rounded-lg text-dark-ink bg-card-white border border-smart-mist h-12 px-4 focus:border-primary focus:ring-1 focus:ring-primary"
+                                                placeholder="••••••••" />
+                                        </label>
+                                        <label class="flex flex-col gap-2">
+                                            <span class="text-dark-ink text-sm font-medium">Mật Khẩu Mới</span>
+                                            <input type="password" th:field="*{newPassword}" required
+                                                class="form-input flex w-full rounded-lg text-dark-ink bg-card-white border border-smart-mist h-12 px-4 focus:border-primary focus:ring-1 focus:ring-primary"
+                                                placeholder="••••••••" />
+                                        </label>
+                                        <label class="flex flex-col gap-2">
+                                            <span class="text-dark-ink text-sm font-medium">Xác Nhận Mật Khẩu</span>
+                                            <input type="password" th:field="*{confirmPassword}" required
+                                                class="form-input flex w-full rounded-lg text-dark-ink bg-card-white border border-smart-mist h-12 px-4 focus:border-primary focus:ring-1 focus:ring-primary"
+                                                placeholder="••••••••" />
+                                        </label>
+                                    </div>
+                                    <div class="flex justify-end">
+                                        <button type="submit"
+                                            class="flex w-full sm:w-auto cursor-pointer items-center justify-center rounded-lg h-12 px-6 bg-dark-ink text-white text-base font-bold hover:bg-black transition-all">
+                                            Cập Nhật Mật Khẩu
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <th:block th:replace="~{fragments/footer :: footer_section}"></th:block>
+    </div>
+
+    <script th:inline="javascript">
+        document.addEventListener('DOMContentLoaded', function () {
+            /* * NHẬN DỮ LIỆU TỪ CONTROLLER
+             * Thymeleaf sẽ điền giá trị vào các biến này khi render server-side
+             */
+            const msgSuccess = /*[[${success}]]*/ null;      // Lấy từ redirectAttributes.addFlashAttribute("success",...)
+            const msgError = /*[[${error}]]*/ null;          // Lấy từ redirectAttributes.addFlashAttribute("error",...)
+            const swalData = /*[[${swal}]]*/ null;           // Lấy data SweetAlert nếu có
+
+            // 1. XỬ LÝ TOAST (Thông báo góc phải)
+            if (msgSuccess) {
+                // Nếu ZaderToast đã được define ở file toast.html
+                if (typeof ZaderToast !== 'undefined') {
+                    ZaderToast.success(msgSuccess);
+                } else {
+                    console.warn("ZaderToast chưa được load");
+                }
+            }
+
+            if (msgError) {
+                if (typeof ZaderToast !== 'undefined') {
+                    ZaderToast.error(msgError);
+                }
+            }
+
+            // 2. XỬ LÝ SWEETALERT (Popup to giữa màn hình)
+            // Dùng cái này khi muốn thông báo quan trọng (VD: Đổi pass xong bắt đăng nhập lại)
+            if (swalData) {
+                Swal.fire({
+                    title: swalData.title || 'Thông báo',
+                    text: swalData.text || '',
+                    icon: swalData.icon || 'info',
+                    confirmButtonColor: '#FF7043', // Màu Chef Orange
+                    confirmButtonText: 'OK'
+                });
+            }
+        });
+
+        // --- TỪ ĐIỂN MÔ TẢ (DESCRIPTIONS) ---
+        const DESCRIPTIONS = {
+            // GOALS
+            'MAINTENANCE': 'Duy trì cân nặng hiện tại. Tốt nhất để giữ dáng mà không đổi kích cỡ.',
+            'WEIGHT_LOSS': 'Tạo thâm hụt calo để giảm mỡ cơ thể trong khi vẫn giữ cơ bắp.',
+            'MUSCLE_GAIN': 'Tạo thặng dư calo để tăng khối lượng cơ bắp (cần tập thể hình).',
+            'WEIGHT_GAIN': 'Tăng tổng trọng lượng cơ thể (cơ + mỡ) cho những người nhẹ cân.',
+
+            // DIETS
+            'BALANCED': 'Không hạn chế thực phẩm. Tập trung vào sự đa dạng và điều độ.',
+            'VEGAN': 'Loại bỏ tất cả các sản phẩm từ động vật (thịt, sữa, trứng, mật ong).',
+            'VEGETARIAN': 'Loại bỏ thịt và cá nhưng cho phép dùng sữa và trứng.',
+            'KETO': 'Nhiều chất béo, rất ít tinh bột. Ép cơ thể vào trạng thái ketosis để đốt mỡ.',
+            'LOW_CARB': 'Giảm lượng carbohydrate, tập trung vào protein và rau xanh.',
+            'EAT_CLEAN': 'Tập trung vào thực phẩm chưa qua chế biến. Không thêm đường hoặc tinh bột tinh chế.',
+            'HIGH_PROTEIN': 'Nhấn mạnh lượng protein để phục hồi cơ bắp và tạo cảm giác no.',
+            'GLUTEN_FREE': 'Loại bỏ gluten (lúa mì, lúa mạch). Rất cần thiết cho bệnh Celiac.',
+            'DAIRY_FREE': 'Loại bỏ sữa và các sản phẩm từ sữa. Tốt cho người không dung nạp lactose.'
+        };
+
+        function showDescription(type, elementId) {
+            const descElement = document.getElementById(elementId);
+            if (DESCRIPTIONS[type]) {
+                descElement.textContent = DESCRIPTIONS[type];
+                descElement.classList.remove('opacity-0');
+            }
+        }
+
+        function clearDescription(elementId) {
+            const descElement = document.getElementById(elementId);
+            // Có thể để trống hoặc reset về câu mặc định
+            descElement.textContent = 'Di chuột vào một tùy chọn để xem chi tiết.';
+            descElement.classList.add('text-gray-400');
+        }
+    </script>
+    <script>
+        // --- LOGIC CẢNH BÁO MỤC TIÊU ---
+        const currentWeightInput = document.getElementById('weightKg'); // Đảm bảo input cân nặng có id="weightKg"
+        const targetWeightInput = document.getElementById('targetWeightInput');
+        const targetDateInput = document.getElementById('targetDateInput');
+        const warningBox = document.getElementById('goalWarning');
+        const warningText = document.getElementById('goalWarningText');
+        const infoBox = document.getElementById('goalInfo');
+        const infoText = document.getElementById('goalInfoText');
+
+        function checkGoalFeasibility() {
+            const currentW = parseFloat(currentWeightInput.value);
+            const targetW = parseFloat(targetWeightInput.value);
+            const targetDateVal = targetDateInput.value;
+
+            if (!currentW || !targetW || !targetDateVal) {
+                warningBox.classList.add('hidden');
+                infoBox.classList.add('hidden');
+                return;
+            }
+
+            const today = new Date();
+            const tDate = new Date(targetDateVal);
+            const diffTime = tDate - today;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+            if (diffDays <= 0) {
+                warningBox.classList.remove('hidden');
+                warningText.textContent = "Ngày mục tiêu phải ở trong tương lai.";
+                infoBox.classList.add('hidden');
+                return;
+            }
+
+            const diffWeight = targetW - currentW; // Âm = Giảm cân, Dương = Tăng cân
+            const weeks = diffDays / 7;
+            const ratePerWeek = Math.abs(diffWeight) / weeks;
+
+            // Reset UI
+            warningBox.classList.add('hidden');
+            infoBox.classList.add('hidden');
+
+            // LOGIC KIỂM TRA
+            // 1. Giảm cân quá nhanh (> 1kg/tuần là khó và hại sức khỏe)
+            if (diffWeight < 0 && ratePerWeek > 1.0) {
+                warningBox.classList.remove('hidden');
+                warningText.textContent = `Bạn đang đặt mục tiêu giảm ${ratePerWeek.toFixed(1)} kg/tuần. Mức an toàn là 0,5 - 1,0 kg/tuần. Điều này đòi hỏi sự thâm hụt calo cực độ.`;
+            }
+            // 2. Tăng cân quá nhanh (> 0.5kg/tuần chủ yếu là mỡ)
+            else if (diffWeight > 0 && ratePerWeek > 0.5) {
+                warningBox.classList.remove('hidden');
+                warningText.textContent = `Bạn đang đặt mục tiêu tăng ${ratePerWeek.toFixed(1)} kg/tuần. Rất khó để tăng cơ nhanh như vậy; bạn có thể sẽ tăng mỡ là chính.`;
+            }
+            // 3. Bình thường
+            else {
+                infoBox.classList.remove('hidden');
+                const type = diffWeight < 0 ? "giảm" : "tăng";
+                infoText.textContent = `Đây là một mục tiêu lành mạnh! Bạn sẽ ${type} khoảng ${ratePerWeek.toFixed(2)} kg/tuần.`;
+            }
+        }
+
+        // Gắn sự kiện lắng nghe thay đổi
+        if (currentWeightInput)
+            currentWeightInput.addEventListener('input', checkGoalFeasibility);
+        if (targetWeightInput)
+            targetWeightInput.addEventListener('input', checkGoalFeasibility);
+        if (targetDateInput)
+            targetDateInput.addEventListener('input', checkGoalFeasibility);
+
+        // [THÊM DÒNG NÀY] Chạy kiểm tra ngay khi load trang để hiện cảnh báo/info
+        checkGoalFeasibility();
+    </script>
+</body>
+
+</html>
+
+</body>
+
+</html>

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{fragments/head :: common-head}">
+    <title>Chính Sách Bảo Mật - ZaderFood</title>
+</head>
+
+<body class="bg-smart-white dark:bg-background-dark font-display min-h-screen flex flex-col">
+
+    <div
+        class="fixed top-0 z-50 w-full bg-white/90 dark:bg-[#211511]/90 backdrop-blur-md shadow-sm border-b border-gray-100 dark:border-gray-800">
+        <div th:replace="~{fragments/navbar :: header_nav}"></div>
+    </div>
+
+    <main class="flex-grow pt-28 pb-16">
+        <div class="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+
+            <div class="text-center mb-12">
+                <h1 class="text-3xl md:text-4xl font-black text-dark-ink dark:text-white mb-4">Chính Sách Bảo Mật</h1>
+                <p class="text-soft-grey dark:text-gray-400">Cập nhật lần cuối: 14 tháng 12 năm 2025</p>
+            </div>
+
+            <div
+                class="bg-white dark:bg-[#1e1e1e] p-8 md:p-12 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
+
+                <div class="space-y-8 text-dark-ink dark:text-gray-300 leading-relaxed">
+
+                    <section>
+                        <h2 class="text-xl font-bold text-primary mb-3">1. Giới thiệu</h2>
+                        <p>Chào mừng đến với ZaderFood ("chúng tôi"). Chúng tôi cam kết bảo vệ quyền riêng tư của bạn và
+                            đảm bảo dữ liệu cá nhân của bạn được xử lý một cách an toàn và có trách nhiệm. Chính sách
+                            Bảo mật này giải thích cách chúng tôi thu thập, sử dụng và bảo vệ thông tin của bạn khi bạn
+                            sử dụng trang web và các dịch vụ lên kế hoạch bữa ăn thông minh của chúng tôi.</p>
+                    </section>
+
+                    <section>
+                        <h2 class="text-xl font-bold text-primary mb-3">2. Thông tin chúng tôi thu thập</h2>
+                        <ul class="list-disc pl-5 space-y-2 text-sm md:text-base">
+                            <li><strong>Thông tin nhận dạng cá nhân:</strong> Tên, địa chỉ email và thông tin đăng nhập
+                                khi bạn đăng ký.</li>
+                            <li><strong>Dữ liệu Sức khỏe & Chế độ ăn uống:</strong> Thông tin bạn cung cấp để lên kế
+                                hoạch bữa ăn, chẳng hạn như tuổi, giới tính, cân nặng, chiều cao, mức độ hoạt động, sở
+                                thích ăn uống và dị ứng thức ăn.</li>
+                            <li><strong>Nội dung Người dùng:</strong> Hình ảnh thức ăn được tải lên để AI phân tích,
+                                công thức bạn tạo và nhật ký bữa ăn.</li>
+                            <li><strong>Dữ liệu Sử dụng:</strong> Thông tin về cách bạn tương tác với trang web, bao gồm
+                                dữ liệu lưu lượng truy cập và nhật ký.</li>
+                        </ul>
+                    </section>
+
+                    <section>
+                        <h2 class="text-xl font-bold text-primary mb-3">3. Cách chúng tôi sử dụng thông tin của bạn</h2>
+                        <p>Chúng tôi sử dụng dữ liệu thu thập được cho các mục đích cụ thể:</p>
+                        <ul class="list-disc pl-5 space-y-2 mt-2 text-sm md:text-base">
+                            <li>Để tạo kế hoạch bữa ăn cá nhân hóa và tính toán nhu cầu dinh dưỡng (TDEE/BMR).</li>
+                            <li>Để cung cấp các dịch vụ nhận diện thức ăn dựa trên AI.</li>
+                            <li>Để cải thiện thuật toán và trải nghiệm người dùng của chúng tôi.</li>
+                            <li>Để gửi cho bạn danh sách mua sắm, thông tin cập nhật hoặc các thông báo thiết yếu về tài
+                                khoản.</li>
+                        </ul>
+                    </section>
+
+                    <section>
+                        <h2 class="text-xl font-bold text-primary mb-3">4. Xử lý qua AI</h2>
+                        <p>Ứng dụng của chúng tôi sử dụng các mô hình AI (như Ollama) để xử lý văn bản và hình ảnh. Khi
+                            bạn sử dụng các tính năng như "Quét thức ăn bằng AI" hoặc "Tạo Kế hoạch Bữa ăn", dữ liệu
+                            liên quan (ví dụ: hình ảnh thức ăn, các hạn chế về chế độ ăn uống) được xử lý để cung cấp
+                            dịch vụ. Chúng tôi không sử dụng dữ liệu sức khỏe cá nhân của bạn cho các mục đích khác
+                            ngoài việc cung cấp chức năng bạn yêu cầu.</p>
+                    </section>
+
+                    <section>
+                        <h2 class="text-xl font-bold text-primary mb-3">5. Bảo mật dữ liệu</h2>
+                        <p>Chúng tôi áp dụng các biện pháp tổ chức và kỹ thuật phù hợp để bảo vệ dữ liệu cá nhân của bạn
+                            khỏi sự truy cập, thay đổi, tiết lộ hoặc phá hủy trái phép. Mật khẩu của bạn được băm và các
+                            kết nối nhạy cảm được bảo mật qua SSL/TLS.</p>
+                    </section>
+
+                    <section>
+                        <h2 class="text-xl font-bold text-primary mb-3">6. Liên hệ với chúng tôi</h2>
+                        <p>Nếu bạn có bất kỳ câu hỏi nào về Chính sách Bảo mật này, vui lòng liên hệ với chúng tôi tại:
+                        </p>
+                        <p class="mt-2 font-medium">ZADER Technology Solutions</p>
+                        <p>Email: support@zaderfood.com</p>
+                        <p>Địa chỉ: Hà Nội, Việt Nam</p>
+                    </section>
+
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer th:replace="~{fragments/footer :: footer_section}"></footer>
+</body>
+
+</html>

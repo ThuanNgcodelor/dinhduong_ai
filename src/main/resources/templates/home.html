@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{fragments/head :: common-head}"></head>
+
+<body class="bg-smart-white dark:bg-background-dark font-display min-h-screen flex flex-col">
+
+    <div
+        class="fixed top-0 z-50 w-full bg-white/90 dark:bg-[#211511]/90 backdrop-blur-md shadow-sm border-b border-gray-100 dark:border-gray-800">
+        <div th:replace="~{fragments/navbar :: header_nav}"></div>
+    </div>
+
+    <main class="flex-grow pt-20">
+
+        <div class="relative w-full overflow-hidden">
+            <div class="absolute inset-0 bg-cover bg-center"
+                style='background-image: url("https://images.unsplash.com/photo-1498837167922-ddd27525d352?q=80&w=2070&auto=format&fit=crop");'>
+            </div>
+            <div class="absolute inset-0 bg-gradient-to-r from-black/90 via-black/60 to-transparent"></div>
+
+            <div
+                class="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 flex flex-col justify-center min-h-[65vh] py-20">
+                <div class="max-w-2xl animate-fade-in-up">
+                    <div
+                        class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-500/20 border border-orange-500/40 text-orange-400 text-xs font-bold uppercase tracking-wider mb-6">
+                        <span class="w-2 h-2 rounded-full bg-orange-500 animate-pulse"></span>
+                        Dinh Dưỡng Theo AI
+                    </div>
+
+                    <h1 class="text-5xl md:text-7xl font-black text-white leading-tight mb-6">
+                        Ăn Thông Minh.<br>
+                        <span class="text-transparent bg-clip-text bg-gradient-to-r from-primary to-yellow-400">Lên Kế
+                            Hoạch Tốt Hơn.</span>
+                    </h1>
+
+                    <p class="text-lg text-gray-300 mb-8 leading-relaxed max-w-xl">
+                        Chấm dứt nỗi lo hôm nay ăn gì. ZaderFood tự động tạo thực đơn mỗi tuần, kiểm soát dinh dưỡng và
+                        lập danh sách mua sắm tự động.
+                    </p>
+
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        <a th:href="@{/meal-plan/generate}"
+                            class="flex items-center justify-center gap-3 px-8 py-4 bg-primary hover:bg-orange-600 text-white rounded-xl font-bold text-lg shadow-lg shadow-primary/30 transition-all transform hover:-translate-y-1">
+                            <span class="material-symbols-outlined">calendar_month</span>
+                            Lên Thực Đơn
+                        </a>
+                        <a th:href="@{/recipes/suggestions}"
+                            class="flex items-center justify-center gap-3 px-8 py-4 bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white border border-white/20 rounded-xl font-bold text-lg transition-all">
+                            <span class="material-symbols-outlined">search</span>
+                            Xem Công Thức
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <section class="py-16 bg-white dark:bg-background-dark relative z-10">
+            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 -mt-24">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+                    <a th:href="@{/meal-plan/customize}"
+                        class="group bg-white dark:bg-[#1e1e1e] p-8 rounded-2xl shadow-xl shadow-gray-200/50 dark:shadow-none border border-gray-100 dark:border-gray-700 hover:border-primary transition-all">
+                        <div
+                            class="h-14 w-14 bg-blue-50 dark:bg-blue-900/20 rounded-xl flex items-center justify-center text-blue-600 dark:text-blue-400 mb-6 group-hover:scale-110 transition-transform">
+                            <span class="material-symbols-outlined !text-3xl">donut_large</span>
+                        </div>
+                        <h3
+                            class="text-xl font-bold text-dark-ink dark:text-white mb-2 group-hover:text-primary transition-colors">
+                            Theo Dõi Dinh Dưỡng</h3>
+                        <p class="text-sm text-soft-grey">Theo dõi Calo, Protein, Carbs và Chất Béo hàng ngày để bám sát
+                            mục tiêu thể hình của bạn.</p>
+                    </a>
+
+                    <a th:href="@{/meal-plan/history}"
+                        class="group bg-white dark:bg-[#1e1e1e] p-8 rounded-2xl shadow-xl shadow-gray-200/50 dark:shadow-none border border-gray-100 dark:border-gray-700 hover:border-green-500 transition-all">
+                        <div
+                            class="h-14 w-14 bg-green-50 dark:bg-green-900/20 rounded-xl flex items-center justify-center text-green-600 dark:text-green-400 mb-6 group-hover:scale-110 transition-transform">
+                            <span class="material-symbols-outlined !text-3xl">shopping_cart</span>
+                        </div>
+                        <h3
+                            class="text-xl font-bold text-dark-ink dark:text-white mb-2 group-hover:text-green-500 transition-colors">
+                            Tự Tạo Danh Sách Chợ</h3>
+                        <p class="text-sm text-soft-grey">Tự động tổng hợp danh sách đi chợ từ thực đơn. Hỗ trợ xuất
+                            Excel hoặc gửi email tức thì.</p>
+                    </a>
+
+                    <div
+                        class="group bg-white dark:bg-[#1e1e1e] p-8 rounded-2xl shadow-xl shadow-gray-200/50 dark:shadow-none border border-gray-100 dark:border-gray-700 hover:border-purple-500 transition-all cursor-pointer">
+                        <div
+                            class="h-14 w-14 bg-purple-50 dark:bg-purple-900/20 rounded-xl flex items-center justify-center text-purple-600 dark:text-purple-400 mb-6 group-hover:scale-110 transition-transform">
+                            <span class="material-symbols-outlined !text-3xl">document_scanner</span>
+                        </div>
+                        <h3
+                            class="text-xl font-bold text-dark-ink dark:text-white mb-2 group-hover:text-purple-500 transition-colors">
+                            Quét Dinh Dưỡng AI</h3>
+                        <p class="text-sm text-soft-grey">Chụp lại ảnh món ăn. AI tự nhận diện nguyên liệu và tính toán
+                            lượng calo tức thì.</p>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <section class="py-20 bg-smart-white dark:bg-[#181818]">
+            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
+                <span class="text-primary font-bold tracking-wider uppercase text-sm">CỰC KỲ ĐƠN GIẢN</span>
+                <h2 class="text-3xl md:text-4xl font-black text-dark-ink dark:text-white mt-2 mb-16">ZaderFood Hoạt Động
+                    Ra Sao?</h2>
+
+                <div class="relative">
+                    <div class="hidden md:block absolute top-12 left-0 w-full h-0.5 bg-gray-200 dark:bg-gray-800 -z-0">
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-10 relative z-10">
+                        <div class="flex flex-col items-center">
+                            <div
+                                class="w-24 h-24 bg-white dark:bg-[#2a2a2a] border-4 border-white dark:border-[#2a2a2a] rounded-full flex items-center justify-center shadow-lg mb-6">
+                                <span class="material-symbols-outlined !text-4xl text-orange-500">calculate</span>
+                            </div>
+                            <h4 class="font-bold text-lg text-dark-ink dark:text-white mb-2">1. Đặt mục tiêu</h4>
+                            <p class="text-sm text-soft-grey">Tính chỉ số TDEE & BMR để lên nhu cầu lượng ca-lo từng
+                                ngày.</p>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <div
+                                class="w-24 h-24 bg-white dark:bg-[#2a2a2a] border-4 border-white dark:border-[#2a2a2a] rounded-full flex items-center justify-center shadow-lg mb-6">
+                                <span class="material-symbols-outlined !text-4xl text-blue-500">auto_awesome</span>
+                            </div>
+                            <h4 class="font-bold text-lg text-dark-ink dark:text-white mb-2">2. Tạo thực đơn</h4>
+                            <p class="text-sm text-soft-grey">AI lên thiết kế thực đơn 7 ngày dành riêng cho sở thích
+                                khẩu vị của bạn.</p>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <div
+                                class="w-24 h-24 bg-white dark:bg-[#2a2a2a] border-4 border-white dark:border-[#2a2a2a] rounded-full flex items-center justify-center shadow-lg mb-6">
+                                <span class="material-symbols-outlined !text-4xl text-green-500">check_circle</span>
+                            </div>
+                            <h4 class="font-bold text-lg text-dark-ink dark:text-white mb-2">3. Theo dõi & Thưởng thức
+                            </h4>
+                            <p class="text-sm text-soft-grey">Lưu lại bữa ăn, tận hưởng và không lo thiếu chất.</p>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <div
+                                class="w-24 h-24 bg-white dark:bg-[#2a2a2a] border-4 border-white dark:border-[#2a2a2a] rounded-full flex items-center justify-center shadow-lg mb-6">
+                                <span class="material-symbols-outlined !text-4xl text-purple-500">insights</span>
+                            </div>
+                            <h4 class="font-bold text-lg text-dark-ink dark:text-white mb-2">4. Xem thành quả</h4>
+                            <p class="text-sm text-soft-grey">Hình dung sức khỏe tiến bộ từng ngày thông qua biểu đồ
+                                đánh giá trực quan.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="py-24 bg-dark-ink dark:bg-black text-white relative overflow-hidden">
+            <div
+                class="absolute top-0 right-0 w-96 h-96 bg-primary/20 rounded-full blur-3xl translate-x-1/2 -translate-y-1/2">
+            </div>
+            <div
+                class="absolute bottom-0 left-0 w-64 h-64 bg-blue-500/20 rounded-full blur-3xl -translate-x-1/2 translate-y-1/2">
+            </div>
+
+            <div class="mx-auto max-w-4xl px-4 text-center relative z-10">
+                <h2 class="text-4xl md:text-5xl font-black mb-6">Bạn Đã Sẵn Sàng Tha Đổi Chế Độ Ăn?</h2>
+                <p class="text-gray-400 mb-10 text-xl">Đồng hành với hơn hàng ngàn cộng đồng người dùng ăn uống lành
+                    mạnh trên ZaderFood.</p>
+                <div class="flex flex-col sm:flex-row justify-center gap-4">
+                    <a th:href="@{/meal-plan/generate}"
+                        class="px-10 py-4 bg-white text-dark-ink rounded-xl font-bold hover:bg-gray-100 transition-all transform hover:-translate-y-1 shadow-lg">
+                        Lên Thực Đơn Ngay
+                    </a>
+                    <a th:href="@{/register}"
+                        class="px-10 py-4 bg-transparent border border-white/30 text-white rounded-xl font-bold hover:bg-white/10 transition-all">
+                        Tạo Tài Khoản Free
+                    </a>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <div th:if="${isProfileMissing}"
+        class="fixed bottom-0 left-0 w-full z-[100] bg-white dark:bg-[#1e1e1e] border-t-4 border-orange-500 shadow-[0_-5px_15px_rgba(0,0,0,0.1)] p-4 animate-fade-in-up">
+
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+
+            <div class="flex items-center gap-4">
+                <div class="relative flex-shrink-0">
+                    <span class="absolute inset-0 rounded-full bg-orange-400 opacity-20 animate-ping"></span>
+                    <div class="relative bg-orange-100 dark:bg-orange-900/30 text-orange-600 p-3 rounded-full">
+                        <span class="material-symbols-outlined">health_metrics</span>
+                    </div>
+                </div>
+
+                <div class="text-center sm:text-left">
+                    <h3 class="font-bold text-dark-ink dark:text-white text-base">Thiếu Dữ Liệu Sức Khỏe Ngài</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">
+                        Yêu cầu hãy cập nhật <strong class="text-orange-500">BMR, TDEE, & Calorie Goal</strong> để sử
+                        dụng triệt để chức năng AI thực đơn.
+                    </p>
+                </div>
+            </div>
+
+            <div class="flex gap-3">
+                <a th:href="@{/user/settings}"
+                    class="whitespace-nowrap px-6 py-2.5 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl shadow-lg shadow-orange-200 dark:shadow-none transition-all transform hover:-translate-y-0.5 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-lg">settings</span>
+                    Cập Nhật Thông Tin
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <footer th:replace="~{fragments/footer :: footer_section}"></footer>
+
+</body>
+
+</html>

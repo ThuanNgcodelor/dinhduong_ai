@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" class="light" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Không Gian Chuyên Gia Dinh Dưỡng - ZaderFood</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#4bbe4f", "background-light": "#FAFAFA", "dark-ink": "#263238", "soft-grey": "#78909C", "nutri-green": "#4CAF50"
+                    },
+                    fontFamily: { "display": ["Manrope", "sans-serif"] },
+                },
+            },
+        }
+    </script>
+</head>
+
+<body class="font-display bg-background-light text-dark-ink">
+    <div class="relative flex min-h-screen w-full">
+        <div th:replace="~{fragments/sidebar_nutritionist :: sidebar}"></div>
+
+        <main class="flex-1 ml-64 bg-gray-50 min-h-screen">
+            <div th:replace="~{fragments/navbar_admin :: header_nav_admin}"></div>
+            <div class="p-8">
+                <header class="mb-8">
+                    <h2 class="text-3xl font-extrabold text-dark-ink">Không Gian Chuyên Gia Dinh Dưỡng</h2>
+                    <p class="text-soft-grey mt-1">Tập trung vào chất lượng nội dung và xu hướng sức khỏe.</p>
+                </header>
+
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <div class="flex justify-between">
+                            <div>
+                                <p class="text-xs font-bold text-soft-grey uppercase">Tổng Thực Đơn</p>
+                                <h3 class="text-3xl font-black text-dark-ink mt-1" th:text="${stats.totalMealPlans}">0
+                                </h3>
+                            </div>
+                            <div class="p-3 bg-purple-50 rounded-full h-12 w-12 flex items-center justify-center">
+                                <span class="material-symbols-outlined text-purple-600">calendar_month</span>
+                            </div>
+                        </div>
+                        <p class="text-xs text-gray-400 mt-2">Thực đơn được tạo hàng ngày</p>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-orange-200 cursor-pointer hover:shadow-md transition"
+                        onclick="window.location.href = '/nutritionist/ingredients/pending'">
+                        <div class="flex justify-between">
+                            <div>
+                                <p class="text-xs font-bold text-orange-600 uppercase">Hàng Đợi Nguyên Liệu</p>
+                                <h3 class="text-3xl font-black text-dark-ink mt-1"
+                                    th:text="${stats.pendingIngredients}">0</h3>
+                            </div>
+                            <div class="p-3 bg-orange-50 rounded-full h-12 w-12 flex items-center justify-center">
+                                <span class="material-symbols-outlined text-orange-500">grocery</span>
+                            </div>
+                        </div>
+                        <p class="text-xs text-gray-400 mt-2">Nguyên liệu mới cần duyệt</p>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition">
+                        <div class="flex justify-between">
+                            <div>
+                                <p class="text-xs font-bold text-soft-grey uppercase">Nguyên Liệu</p>
+                                <h3 class="text-3xl font-black text-dark-ink mt-1" th:text="${stats.totalIngredients}">0
+                                </h3>
+                            </div>
+                            <div class="p-3 bg-green-50 rounded-full h-12 w-12 flex items-center justify-center">
+                                <span class="material-symbols-outlined text-green-600">nutrition</span>
+                            </div>
+                        </div>
+                        <p class="text-xs text-gray-400 mt-2">Tổng mục trong hệ thống</p>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <div class="flex justify-between">
+                            <div>
+                                <p class="text-xs font-bold text-soft-grey uppercase">Đã Xuất Bản</p>
+                                <h3 class="text-3xl font-black text-dark-ink mt-1" th:text="${stats.activeRecipes}">0
+                                </h3>
+                            </div>
+                            <div class="p-3 bg-blue-50 rounded-full h-12 w-12 flex items-center justify-center">
+                                <span class="material-symbols-outlined text-blue-600">menu_book</span>
+                            </div>
+                        </div>
+                        <p class="text-xs text-gray-400 mt-2">Công thức đang hoạt động</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <h3 class="text-lg font-bold text-dark-ink mb-1">Mục Tiêu Sức Khỏe Người Dùng</h3>
+                        <p class="text-sm text-gray-500 mb-6">Người dùng đang hướng tới mục tiêu gì?</p>
+                        <div class="h-64">
+                            <canvas id="goalChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <h3 class="text-lg font-bold text-dark-ink mb-1">Sở Thích Ăn Uống</h3>
+                        <p class="text-sm text-gray-500 mb-6">Phân bố bộ lọc theo lựa chọn của người dùng</p>
+                        <div class="h-64 flex justify-center">
+                            <canvas id="dietChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-6 overflow-x-auto bg-white rounded-xl shadow-sm border border-gray-100 mt-7">
+                    <h3 class="text-lg font-bold text-dark-ink mb-1">Các Công Thức Được Sử Dụng Nhiều Nhất</h3>
+                    <table class="w-full text-left border-collapse align-middle">
+                        <thead>
+                            <tr class="text-xs font-bold text-gray-400 uppercase border-b border-gray-100">
+                                <th class="py-3 pl-2">Hạng</th>
+                                <th class="py-3 pl-2">Công Thức</th>
+                                <th class="py-3">Ngày Thêm</th>
+                                <th class="py-3 text-center">Tổng Dùng</th>
+                                <th class="py-3 text-right pr-2">Thao Tác</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-sm text-dark-ink">
+                            <tr th:each="recipe, iterStat : ${stats.topAddedRecipes}"
+                                class="border-b border-gray-50 hover:bg-gray-50 transition group">
+                                <td class="py-3 pl-2" th:text="${iterStat.index + 1}">1</td>
+                                <td class="py-3 pl-2">
+                                    <div class="flex items-center gap-3">
+                                        <img th:src="${recipe.imageUrl}"
+                                            class="w-10 h-10 rounded-lg object-cover border border-gray-200"
+                                            onerror="this.src='/images/default-food.png'">
+                                        <div>
+                                            <p class="font-bold text-dark-ink line-clamp-1" th:text="${recipe.name}">
+                                                Tên Món Ăn</p>
+                                            <p class="text-xs text-gray-400">ID: [[${recipe.id}]]</p>
+                                        </div>
+                                    </div>
+                                </td>
+
+                                <td class="py-3 text-gray-500 text-xs">
+                                    <span th:text="${#temporals.format(recipe.createdAt, 'dd MMM yyyy')}">Date</span>
+                                </td>
+
+                                <td class="py-3 text-center">
+                                    <span
+                                        class="inline-flex items-center gap-1 bg-orange-50 text-orange-700 px-2 py-1 rounded-md text-xs font-bold border border-orange-100">
+                                        <span class="material-symbols-outlined text-[14px]">trending_up</span>
+                                        [[${recipe.count}]]
+                                    </span>
+                                </td>
+
+                                <td class="py-3 text-right pr-2">
+                                    <a th:href="@{/recipes/detail/{id}(id=${recipe.id})}" target="_blank"
+                                        class="text-xs font-bold text-blue-600 hover:text-white bg-blue-50 hover:bg-blue-600 border border-blue-100 px-3 py-1.5 rounded-lg transition-all shadow-sm inline-flex items-center gap-1">
+                                        Xem <span class="material-symbols-outlined text-[14px]">open_in_new</span>
+                                    </a>
+                                </td>
+                            </tr>
+
+                            <tr th:if="${#lists.isEmpty(stats.topAddedRecipes)}">
+                                <td colspan="4" class="py-8 text-center text-gray-400 italic">
+                                    <div class="flex flex-col items-center">
+                                        <span
+                                            class="material-symbols-outlined text-3xl mb-2 text-gray-300">no_food</span>
+                                        Chưa có dữ liệu xu hướng hiện hành.
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mt-7">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-lg font-bold text-dark-ink">Được Yêu Thích Nhất</h3>
+                        <span class="text-xs font-bold text-soft-grey bg-gray-100 px-3 py-1 rounded-full">Người Dùng Đã
+                            Lưu</span>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse align-middle">
+                            <thead>
+                                <tr class="text-xs font-bold text-gray-400 uppercase border-b border-gray-100">
+                                    <th class="py-3 pl-2">Hạng</th>
+                                    <th class="py-3 pl-2">Công Thức</th>
+                                    <th class="py-3">Ngày Thêm</th>
+                                    <th class="py-3 text-center">Lượt Lưu</th>
+                                    <th class="py-3 text-right pr-2">Thao Tác</th>
+                                </tr>
+                            </thead>
+                            <tbody class="text-sm text-dark-ink">
+                                <tr th:each="fav, iterStat : ${stats.topFavoritedRecipes}"
+                                    class="border-b border-gray-50 hover:bg-gray-50 transition group">
+                                    <td class="py-3 pl-2" th:text="${iterStat.index + 1}"></td>
+                                    <td class="py-3 pl-2">
+                                        <div class="flex items-center gap-3">
+                                            <img th:src="${fav.imageUrl}"
+                                                class="w-10 h-10 rounded-lg object-cover border border-gray-200"
+                                                onerror="this.src='/images/default-food.png'">
+                                            <div>
+                                                <p class="font-bold text-dark-ink line-clamp-1" th:text="${fav.name}">
+                                                    Tên Món Ăn</p>
+                                                <p class="text-xs text-gray-400"
+                                                    th:text="${#temporals.format(fav.createdAt, 'dd MMM')}">Ngày</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="py-3 text-gray-500 text-xs">
+                                        <span th:text="${#temporals.format(fav.createdAt, 'dd MMM yyyy')}">Ngày</span>
+                                    </td>
+                                    <td class="py-3 text-center">
+                                        <span
+                                            class="inline-flex items-center gap-1 bg-pink-50 text-pink-600 px-2 py-1 rounded-md text-xs font-bold border border-pink-100">
+                                            <span class="material-symbols-outlined text-[12px]">favorite</span>
+                                            [[${fav.count}]]
+                                        </span>
+                                    </td>
+                                    <td class="py-3 text-right pr-2">
+                                        <a th:href="@{/recipes/detail/{id}(id=${fav.id})}" target="_blank"
+                                            class="text-xs font-bold text-blue-600 hover:text-white bg-blue-50 hover:bg-blue-600 border border-blue-100 px-3 py-1.5 rounded-lg transition-all shadow-sm inline-flex items-center gap-1">
+                                            Xem <span class="material-symbols-outlined text-[14px]">open_in_new</span>
+                                        </a>
+                                    </td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(stats.topFavoritedRecipes)}">
+                                    <td colspan="3" class="py-6 text-center text-gray-400 italic">Chưa có lượt thích
+                                        nào.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script th:inline="javascript">
+        // Goal Chart Data
+        const goalLabels = /*[[${stats.goalLabels}]]*/[];
+        const goalData = /*[[${stats.goalData}]]*/[];
+        new Chart(document.getElementById('goalChart'), {
+            type: 'bar',
+            data: {
+                labels: goalLabels,
+                datasets: [{
+                    label: 'Users',
+                    data: goalData,
+                    backgroundColor: '#4CAF50',
+                    borderRadius: 6,
+                    barThickness: 40
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true, grid: { display: false } } }
+            }
+        });
+        // Diet Chart Data
+        const dietLabels = /*[[${stats.dietLabels}]]*/[];
+        const dietData = /*[[${stats.dietData}]]*/[];
+        new Chart(document.getElementById('dietChart'), {
+            type: 'doughnut',
+            data: {
+                labels: dietLabels,
+                datasets: [{
+                    data: dietData,
+                    backgroundColor: ['#81C784', '#66BB6A', '#4CAF50', '#43A047', '#2E7D32', '#1B5E20'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'right' } },
+                cutout: '75%'
+            }
+        });
+    </script>
+</body>
+
+</html>

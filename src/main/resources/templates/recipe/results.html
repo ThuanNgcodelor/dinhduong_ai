@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<div th:replace="~{fragments/head :: common-head}"></div>
+
+<head>
+    <title>Dinh Dưỡng Thông Minh - Gợi Ý Công Thức</title>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: { "primary": "#3bbf41", "background-light": "#FAFAFA", "background-dark": "#141e14", "dark-ink": "#263238", "soft-grey": "#78909C", "nutri-green": "#4CAF50", "chef-orange": "#FF7043" },
+                    fontFamily: { "display": ["Plus Jakarta Sans", "Noto Sans", "sans-serif"] }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Style cho nút phân trang */
+        .active {
+            background-color: rgb(76 175 80 / var(--tw-bg-opacity, 1)) !important;
+            color: white;
+        }
+
+        .pagination-btn:not(.active) {
+            background-color: white;
+            color: black;
+        }
+
+        .pagination-btn:disabled {
+            @apply opacity-50 cursor-not-allowed bg-gray-100;
+        }
+    </style>
+</head>
+
+<body class="font-display bg-background-light dark:bg-background-dark">
+    <div class="relative flex h-auto min-h-screen w-full flex-col overflow-x-hidden">
+        <div th:replace="~{fragments/navbar :: header_nav}"></div>
+
+        <main class="flex flex-1 w-full">
+            <div class="flex flex-col lg:flex-row w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 gap-8">
+
+                <aside class="w-full lg:w-1/4 lg:max-w-xs shrink-0">
+                    <div class="sticky top-24 space-y-6">
+
+                        <form id="filterForm" th:action="@{/recipes/suggestions}" method="get"
+                            class="flex flex-col gap-6">
+
+                            <th:block th:if="${param.ids}">
+                                <input type="hidden" name="ids" th:each="id : ${param.ids}" th:value="${id}" />
+                            </th:block>
+
+                            <div class="bg-white dark:bg-dark-ink/50 p-6 rounded-xl border border-gray-200 shadow-sm"
+                                th:if="${not #lists.isEmpty(selectedIngredients)}">
+                                <div class="flex flex-col gap-4">
+                                    <div class="flex items-center gap-3">
+                                        <span class="material-symbols-outlined text-nutri-green text-2xl">kitchen</span>
+                                        <h1 class="text-dark-ink dark:text-white text-base font-bold">Nguyên Liệu Đã
+                                            Chọn</h1>
+                                    </div>
+                                    <div class="flex flex-col gap-2">
+                                        <div th:each="ing : ${selectedIngredients}"
+                                            class="flex items-center gap-3 px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-700">
+                                            <span
+                                                class="material-symbols-outlined text-nutri-green text-base">check_circle</span>
+                                            <p class="text-dark-ink dark:text-gray-300 text-sm font-medium"
+                                                th:text="${ing.name}">Ingredient</p>
+                                        </div>
+                                    </div>
+                                    <a th:href="@{/recipes/search(ids=${#strings.listJoin(selectedIngredients.![ingredientId], ',')})}"
+                                        class="mt-2 w-full flex items-center justify-center gap-2 text-sm font-medium text-nutri-green hover:underline">
+                                        <span class="material-symbols-outlined text-lg">edit</span>
+                                        Thay Đổi Nguyên Liệu
+                                    </a>
+                                </div>
+                            </div>
+
+                            <div class="bg-white dark:bg-dark-ink/50 p-6 rounded-xl border border-gray-200 shadow-sm text-center"
+                                th:if="${#lists.isEmpty(selectedIngredients)}">
+                                <p class="text-sm text-gray-500 mb-3">Đang hiển thị tất cả công thức.</p>
+                                <a th:href="@{/recipes/search}"
+                                    class="btn bg-nutri-green text-white px-4 py-2 rounded-lg text-sm font-bold w-full block">
+                                    Tìm Theo Nguyên Liệu
+                                </a>
+                            </div>
+
+                            <div class="bg-white dark:bg-dark-ink/50 p-6 rounded-xl border border-gray-200 shadow-sm">
+                                <div class="flex items-center gap-2 mb-4">
+                                    <span class="material-symbols-outlined text-dark-ink dark:text-white">tune</span>
+                                    <h2 class="text-dark-ink dark:text-white text-base font-bold">Bộ Lọc</h2>
+                                </div>
+
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Calo Tối
+                                            Đa</label>
+                                        <input type="number" name="maxCalories" th:value="${maxCalories}"
+                                            placeholder="VD: 500"
+                                            class="mt-1 w-full rounded-lg border-gray-300 shadow-sm focus:border-nutri-green focus:ring focus:ring-nutri-green/20 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                    </div>
+
+                                    <div>
+                                        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Thời Gian
+                                            Nấu Tối Đa (phút)</label>
+                                        <input type="number" name="maxTime" th:value="${maxTime}" placeholder="VD: 30"
+                                            class="mt-1 w-full rounded-lg border-gray-300 shadow-sm focus:border-nutri-green focus:ring focus:ring-nutri-green/20 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                    </div>
+
+                                    <div>
+                                        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Độ
+                                            Khó</label>
+                                        <select name="difficulty"
+                                            class="mt-1 w-full rounded-lg border-gray-300 shadow-sm focus:border-nutri-green focus:ring focus:ring-nutri-green/20 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                            <option value="">Tất cả</option>
+                                            <option value="EASY" th:selected="${difficulty == 'EASY'}">Dễ</option>
+                                            <option value="MEDIUM" th:selected="${difficulty == 'MEDIUM'}">Trung Bình
+                                            </option>
+                                            <option value="HARD" th:selected="${difficulty == 'HARD'}">Khó</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="flex items-center gap-3 pt-2 pb-2">
+                                        <div class="relative flex items-start">
+                                            <div class="flex h-6 items-center">
+                                                <input id="isNutritionist" name="isNutritionist" type="checkbox"
+                                                    value="true" th:checked="${isNutritionist}"
+                                                    class="h-5 w-5 rounded border-gray-300 text-nutri-green focus:ring-nutri-green dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800">
+                                            </div>
+                                            <div class="ml-3 text-sm leading-6">
+                                                <label for="isNutritionist"
+                                                    class="font-medium text-dark-ink dark:text-white flex items-center gap-2">
+                                                    <span
+                                                        class="material-symbols-outlined !text-[18px] text-blue-600">verified</span>
+                                                    Chỉ Công Thức Chuyên Gia
+                                                </label>
+                                                <p class="text-xs text-gray-500 dark:text-gray-400">Được chuyên gia dinh
+                                                    dưỡng xác nhận.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <button type="submit"
+                                        class="w-full bg-dark-ink text-white font-bold py-2 rounded-lg hover:bg-opacity-90 transition">
+                                        Áp Dụng Bộ Lọc
+                                    </button>
+
+                                    <a th:href="@{/recipes/suggestions(ids=${param.ids})}"
+                                        class="block text-center text-xs text-gray-500 hover:text-nutri-green mt-2">
+                                        Xóa Bộ Lọc
+                                    </a>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </aside>
+
+                <div class="flex-1 flex flex-col gap-8">
+
+                    <div class="flex flex-col gap-4">
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <span class="material-symbols-outlined text-gray-400">search</span>
+                            </div>
+                            <input type="text" name="keyword" form="filterForm" th:value="${keyword}"
+                                class="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-xl leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:border-nutri-green focus:ring-1 focus:ring-nutri-green sm:text-sm shadow-sm dark:bg-dark-ink/50 dark:border-gray-700 dark:text-white"
+                                placeholder="Tìm công thức theo tên (VD: Phở, Salad)...">
+
+                            <button type="submit" form="filterForm"
+                                class="absolute inset-y-2 right-2 px-4 bg-nutri-green text-white text-sm font-bold rounded-lg hover:bg-opacity-90">
+                                Tìm kiếm
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col gap-6">
+                        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+                            <h2 class="text-dark-ink dark:text-white text-3xl font-black">
+                                <span
+                                    th:text="${#lists.isEmpty(recipeMatches) ? 'Không Tìm Thấy Công Thức' : 'Công Thức Tìm Thấy'}">Recipe
+                                    Suggestions</span>
+                                <span class="text-lg font-medium text-gray-500 ml-2"
+                                    th:text="'(' + ${recipeMatches != null ? recipeMatches.size() : 0} + ' kết quả)'">(0
+                                    kết quả)</span>
+                            </h2>
+                        </div>
+
+                        <p th:if="${#lists.isEmpty(recipeMatches)}"
+                            class="text-gray-500 italic bg-gray-50 p-4 rounded-lg border border-gray-200">
+                            Không tìm thấy công thức nào phù hợp. Thử điều chỉnh bộ lọc hoặc từ khóa tìm kiếm.
+                        </p>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6" id="recipe-grid">
+
+                            <div th:each="match : ${recipeMatches}"
+                                class="recipe-item flex flex-col bg-white dark:bg-dark-ink/50 rounded-xl border border-gray-200 shadow-sm overflow-hidden transition-shadow hover:shadow-lg group relative">
+
+                                <button th:data-id="${match.recipe.recipeId}" th:data-name="${match.recipe.name}"
+                                    onclick="toggleHeart(event, this)"
+                                    class="absolute top-3 left-3 z-20 flex items-center justify-center w-8 h-8 rounded-full bg-white/80 hover:bg-white text-gray-400 hover:text-red-500 shadow-sm transition-colors backdrop-blur-sm"
+                                    title="Thêm Vào Yêu Thích">
+                                    <span class="material-symbols-outlined !text-[20px]">favorite</span>
+                                </button>
+
+                                <div class="absolute top-3 right-3 z-10 flex flex-col gap-2 items-end">
+                                    <div th:if="${match.recipe.isNutritionist}"
+                                        class="flex items-center gap-1 px-2 py-1 rounded-lg bg-blue-600 text-white shadow-sm backdrop-blur-sm bg-opacity-90">
+                                        <span class="material-symbols-outlined !text-[16px]">verified</span>
+                                        <span class="text-[10px] font-bold uppercase tracking-wider">Chuyên Gia</span>
+                                    </div>
+
+                                    <div th:if="${not #lists.isEmpty(selectedIngredients)}"
+                                        class="px-2 py-1 rounded-lg text-xs font-bold text-white shadow-sm"
+                                        th:classappend="${match.matchPercentage == 100 ? 'bg-nutri-green' : (match.matchPercentage >= 50 ? 'bg-yellow-500' : 'bg-red-500')}">
+                                        <span th:text="${match.matchPercentage} + '% Phù hợp'"></span>
+                                    </div>
+                                </div>
+
+                                <img th:src="${match.recipe.imageUrl}"
+                                    class="w-full bg-center bg-no-repeat  aspect-video group-hover:scale-105 transition-transform duration-500"
+                                    style="object-fit: cover"
+                                    onerror="this.src='https://placehold.co/400x400?text=No_Image'" alt="alt" />
+
+                                <div class="p-4 flex flex-col gap-3 flex-1">
+                                    <div class="flex-1">
+                                        <p class="text-dark-ink dark:text-white text-base font-bold leading-normal truncate"
+                                            th:text="${match.recipe.name}">Recipe Name</p>
+
+                                        <th:block th:if="${not #lists.isEmpty(selectedIngredients)}">
+
+                                            <div th:if="${match.missingCount > 0 && match.matchPercentage < 100}"
+                                                class="mt-2">
+                                                <p class="text-xs text-red-500 font-bold mb-1">
+                                                    Thiếu <span th:text="${match.missingCount}">2</span> nguyên liệu:
+                                                </p>
+                                                <div class="flex flex-wrap gap-1">
+                                                    <span th:each="missingItem, iter : ${match.missingIngredients}"
+                                                        th:if="${iter.index < 3}"
+                                                        class="px-2 py-0.5 bg-red-50 text-red-600 text-[10px] rounded border border-red-100 font-medium truncate max-w-[100px]"
+                                                        th:text="${missingItem}">Item</span>
+                                                    <span th:if="${match.missingCount > 3}"
+                                                        class="text-[10px] text-gray-400 font-medium">...</span>
+                                                </div>
+                                            </div>
+
+                                            <div th:if="${match.matchPercentage == 100}" class="mt-2">
+                                                <p class="text-nutri-green text-sm font-bold flex items-center gap-1">
+                                                    <span class="material-symbols-outlined !text-lg">check_circle</span>
+                                                    Bạn đã có đủ nguyên liệu!
+                                                </p>
+                                            </div>
+
+                                        </th:block>
+
+                                        <div
+                                            class="flex items-center gap-2 mt-3 text-soft-grey text-sm pt-2 border-t border-gray-100 dark:border-gray-700">
+                                            <span class="flex items-center gap-1"><span
+                                                    class="material-symbols-outlined !text-[16px]">local_fire_department</span>
+                                                <span th:text="${match.recipe.totalCalories}">0</span></span>
+                                            <span>|</span>
+                                            <span class="flex items-center gap-1"><span
+                                                    class="material-symbols-outlined !text-[16px]">schedule</span> <span
+                                                    th:text="${match.recipe.cookTimeMin}">0</span>m</span>
+                                            <span th:if="${match.recipe.difficulty}">|</span>
+                                            <span th:if="${match.recipe.difficulty}" class="uppercase text-xs font-bold"
+                                                th:classappend="${match.recipe.difficulty.name() == 'EASY' ? 'text-green-500' : (match.recipe.difficulty.name() == 'MEDIUM' ? 'text-yellow-500' : 'text-red-500')}"
+                                                th:text="${match.recipe.difficulty}">EASY</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex flex-col sm:flex-row gap-2 mt-2">
+                                        <a th:href="@{/recipes/detail/{id}(id=${match.recipe.recipeId})}"
+                                            class="w-full flex items-center justify-center h-10 px-4 text-sm font-bold text-white bg-nutri-green rounded-lg hover:bg-opacity-90 transition">
+                                            Xem Công Thức
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="p-3 bg-white flex justify-center items-center">
+                            <div id="pagination-controls" class="flex justify-center items-center gap-2"
+                                th:if="${not #lists.isEmpty(recipeMatches)}"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!--toast-->
+    <div th:replace="~{fragments/toast :: toast-system}"></div>
+</body>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const itemsPerPage = 15; // Số lượng món trên mỗi trang
+        const recipeContainer = document.getElementById('recipe-grid');
+        const items = recipeContainer.querySelectorAll('.recipe-item');
+        const paginationContainer = document.getElementById('pagination-controls');
+
+        if (items.length <= itemsPerPage)
+            return; // Nếu ít món quá thì không cần phân trang
+
+        const totalPages = Math.ceil(items.length / itemsPerPage);
+        let currentPage = 1;
+
+        function showPage(page) {
+            const start = (page - 1) * itemsPerPage;
+            const end = start + itemsPerPage;
+
+            items.forEach((item, index) => {
+                if (index >= start && index < end) {
+                    item.style.display = 'flex'; // Hiển thị (dùng flex vì class gốc là flex)
+                } else {
+                    item.style.display = 'none'; // Ẩn
+                }
+            });
+            renderPaginationButtons();
+            // Scroll lên đầu danh sách khi chuyển trang cho mượt
+            if (page > 1)
+                recipeContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function renderPaginationButtons() {
+            paginationContainer.innerHTML = ''; // Xóa nút cũ
+
+            // Nút Previous
+            const prevBtn = document.createElement('button');
+            prevBtn.innerText = 'Trang trước';
+            prevBtn.className = 'pagination-btn';
+            prevBtn.disabled = currentPage === 1;
+            prevBtn.onclick = () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    showPage(currentPage);
+                }
+            };
+            paginationContainer.appendChild(prevBtn);
+
+            // Các nút số trang (1, 2, 3...)
+            // Logic thông minh: Chỉ hiện 5 trang xung quanh trang hiện tại để tránh bị dài quá
+            let startPage = Math.max(1, currentPage - 2);
+            let endPage = Math.min(totalPages, startPage + 4);
+
+            if (endPage - startPage < 4) {
+                startPage = Math.max(1, endPage - 4);
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                const btn = document.createElement('button');
+                btn.innerText = i;
+                btn.className = `px-4 py-2 mx-1 border rounded-lg text-sm font-bold transition-colors duration-200 ${i === currentPage ? 'active' : ''}`;
+                btn.onclick = () => {
+                    currentPage = i;
+                    showPage(currentPage);
+                };
+                paginationContainer.appendChild(btn);
+            }
+
+            // Nút Next
+            const nextBtn = document.createElement('button');
+            nextBtn.innerText = 'Trang sau';
+            nextBtn.className = 'pagination-btn';
+            nextBtn.disabled = currentPage === totalPages;
+            nextBtn.onclick = () => {
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    showPage(currentPage);
+                }
+            };
+            paginationContainer.appendChild(nextBtn);
+        }
+
+        // Khởi chạy trang đầu tiên
+        showPage(1);
+    });
+
+    // Hàm xử lý khi click trái tim (ĐÃ SỬA)
+    function toggleHeart(event, btnElement) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        // 1. Lấy dữ liệu từ attribute
+        const recipeId = btnElement.getAttribute('data-id');
+        const recipeName = btnElement.getAttribute('data-name');
+        const icon = btnElement.querySelector('span');
+
+        // 2. GỌI TOAST LOADING
+        const loadingToastId = ZaderToast.loading(`Thêm "${recipeName}" vào yêu thích...`);
+
+        setTimeout(() => {
+            fetch('/recipes/api/favorite/' + recipeId, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+                .then(response => {
+                    if (response.status === 401) {
+                        throw new Error("UNAUTHORIZED");
+                    }
+                    if (!response.ok) {
+                        throw new Error("SERVER_ERROR");
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    ZaderToast.remove(loadingToastId);
+
+                    if (data.status === 'added' || data.status === 'exists') {
+                        // Success logic
+                        const msg = data.status === 'exists'
+                            ? `"${recipeName}" đã nằm trong danh sách yêu thích.`
+                            : `Đã thêm "${recipeName}" vào yêu thích!`;
+
+                        ZaderToast.success(msg);
+
+                        // Update Icon UI
+                        icon.classList.remove('text-gray-400');
+                        icon.classList.add('text-red-500', 'fill-current');
+                        icon.style.fontVariationSettings = "'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24";
+
+                        // Animation
+                        btnElement.classList.add('scale-110');
+                        setTimeout(() => btnElement.classList.remove('scale-110'), 200);
+                    }
+                })
+                .catch(error => {
+                    ZaderToast.remove(loadingToastId);
+
+                    if (error.message === "UNAUTHORIZED") {
+                        ZaderToast.error("Vui lòng đăng nhập để lưu công thức!");
+                    } else {
+                        ZaderToast.error("Lỗi thêm công thức. Thử lại sau.");
+                    }
+                    console.error('Error:', error);
+                });
+        }, 500);
+    }
+</script>
+
+</html>

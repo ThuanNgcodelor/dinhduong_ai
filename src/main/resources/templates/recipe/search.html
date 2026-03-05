@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="en">
+
+<head>
+    <div th:replace="~{fragments/head :: common-head}"></div>
+    <title>Chọn Nguyên Liệu - Zader Food</title>
+    <style>
+        .selected-ing {
+            background-color: #4CAF50 !important;
+            color: white !important;
+            border: none !important;
+        }
+    </style>
+</head>
+
+<body class="font-display bg-background-light text-dark-ink">
+    <div class="relative flex min-h-screen w-full flex-col">
+        <div th:replace="~{fragments/navbar :: header_nav}"></div>
+
+        <main class="flex h-full grow flex-col">
+            <div class="flex flex-1 justify-center px-4 py-10 sm:px-6 lg:px-8">
+                <div class="flex w-full max-w-7xl flex-1 flex-col gap-8 lg:flex-row">
+
+                    <div class="flex flex-1 flex-col">
+                        <div class="mb-4 flex flex-col gap-2">
+                            <p class="text-4xl font-black leading-tight text-dark-ink">Có gì trong bếp của bạn?</p>
+                            <p class="text-base font-normal text-soft-grey">Chọn nguyên liệu để tìm những ý tưởng món ăn
+                                ngon.</p>
+                        </div>
+
+                        <div class="sticky top-[64px] z-40 bg-background-light py-3">
+                            <div
+                                class="flex h-14 w-full items-stretch rounded-lg border border-border-color bg-card-white shadow-sm">
+                                <div class="flex items-center justify-center pl-4 text-soft-grey"><span
+                                        class="material-symbols-outlined">search</span></div>
+                                <input id="searchInput" onkeyup="filterIngredients()"
+                                    class="h-full w-full border-none bg-transparent px-4 text-base focus:outline-none focus:ring-0"
+                                    placeholder="Tìm nguyên liệu..." />
+                            </div>
+                        </div>
+
+                        <div class="flex flex-wrap gap-2 p-1 pb-4">
+                            <button id="btn-cat-all" data-cat="all" onclick="filterByCategory('all')"
+                                class="filter-btn active-filter flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-nutri-green text-white px-4 transition-colors">
+                                <p class="text-sm font-medium">Tất cả</p>
+                            </button>
+                            <button th:each="entry : ${categories}" th:id="'btn-cat-' + ${entry.key}"
+                                th:data-cat="${entry.key}" onclick="filterByCategory(this.getAttribute('data-cat'))"
+                                class="filter-btn flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-lg border border-border-color bg-card-white px-4 hover:bg-gray-100 transition-colors">
+                                <p class="text-sm font-medium" th:text="${entry.key}">Cat</p>
+                            </button>
+                        </div>
+
+                        <div class="flex flex-col gap-8" id="ingredientsContainer">
+                            <div th:each="entry : ${categories}" class="category-section"
+                                th:data-category="${entry.key}">
+                                <h2 class="pb-3 pt-5 text-[22px] font-bold text-dark-ink" th:text="${entry.key}">Cat
+                                    Name</h2>
+                                <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+                                    <button th:each="ing : ${entry.value}" th:id="'btn-ing-' + ${ing.ingredientId}"
+                                        th:data-id="${ing.ingredientId}" th:data-name="${ing.name}"
+                                        onclick="toggleIngredient(this)"
+                                        class="ingredient-btn flex h-auto min-h-[40px] w-full cursor-pointer items-center justify-center rounded-lg border border-border-color bg-card-white px-3 py-2 hover:border-nutri-green transition-colors">
+
+                                        <p class="text-sm font-medium text-dark-ink whitespace-normal break-words text-center leading-tight"
+                                            th:text="${ing.name}">Name</p>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <aside class="w-full lg:w-80 lg:min-w-80">
+                        <div class="sticky top-24 flex flex-col gap-4">
+                            <div
+                                class="flex flex-col gap-4 rounded-xl border border-border-color bg-card-white p-6 shadow-soft">
+                                <div class="flex items-center justify-between">
+                                    <h3 class="text-lg font-bold text-dark-ink">Nguyên Liệu Của Bạn (<span
+                                            id="countDisplay">0</span>)</h3>
+                                    <button id="btnClearAll" onclick="clearAllIngredients()"
+                                        class="hidden text-xs font-bold text-red-500 hover:underline">Xóa Tất
+                                        Cả</button>
+                                </div>
+                                <div id="selectedContainer" class="flex flex-wrap gap-2 min-h-[50px]">
+                                    <p id="emptyMsg" class="text-sm text-soft-grey italic">Chưa có nguyên liệu nào được
+                                        chọn.</p>
+                                </div>
+                                <button onclick="submitSearch()"
+                                    class="mt-4 flex h-12 w-full items-center justify-center rounded-lg bg-nutri-green px-4 text-base font-bold text-white hover:bg-deep-forest transition shadow-sm">Tìm
+                                    Công Thức</button>
+                            </div>
+
+                            <div
+                                class="flex flex-col gap-4 rounded-xl border border-blue-100 bg-blue-50 p-6 dark:border-blue-900 dark:bg-blue-900/20 shadow-soft">
+
+                                <div sec:authorize="!isAuthenticated()">
+                                    <div class="flex flex-col gap-2 text-center">
+                                        <div
+                                            class="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 text-blue-600 dark:bg-blue-800 dark:text-blue-300">
+                                            <span class="material-symbols-outlined">help</span>
+                                        </div>
+                                        <h4 class="text-base font-bold text-dark-ink dark:text-white">Không tìm thấy
+                                            nguyên liệu của bạn?</h4>
+                                        <p class="text-sm text-soft-grey dark:text-gray-400">Đăng nhập để đóng góp
+                                            nguyên liệu mới cho cơ sở dữ liệu cộng đồng.</p>
+                                        <a th:href="@{/login}"
+                                            class="mt-2 flex w-full items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-bold text-white hover:bg-blue-700 transition shadow-sm">
+                                            Đăng nhập để yêu cầu
+                                        </a>
+                                    </div>
+                                </div>
+
+                                <div sec:authorize="hasRole('USER') and !hasRole('ADMIN') and !hasRole('NUTRITIONIST')">
+                                    <div class="flex flex-col gap-2 text-center">
+                                        <div
+                                            class="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-green-100 text-nutri-green dark:bg-green-800 dark:text-green-300">
+                                            <span class="material-symbols-outlined">add_reaction</span>
+                                        </div>
+                                        <h4 class="text-base font-bold text-dark-ink dark:text-white">Thiếu gì đó?</h4>
+                                        <p class="text-sm text-soft-grey dark:text-gray-400">Yêu cầu một nguyên liệu mới
+                                            và chúng tôi sẽ xem xét giúp bạn.</p>
+                                        <a th:href="@{/recipes/request-ingredient}"
+                                            class="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-nutri-green px-4 py-2 text-sm font-bold text-white hover:bg-deep-forest transition shadow-sm">
+                                            <span class="material-symbols-outlined !text-lg">add</span>
+                                            Yêu Cầu Nguyên Liệu Mới
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </aside>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div th:replace="~{fragments/toast :: toast-system}"></div>
+
+    <script>
+        // Khai báo biến toàn cục
+        let selectedIds = [];
+        const selectedContainer = document.getElementById('selectedContainer');
+        const countDisplay = document.getElementById('countDisplay');
+        const emptyMsg = document.getElementById('emptyMsg');
+
+        // --- SỰ KIỆN KHI TRANG TẢI XONG ---
+        document.addEventListener("DOMContentLoaded", function () {
+
+            // 1. KHÔI PHỤC NGUYÊN LIỆU ĐÃ CHỌN TỪ URL
+            // Lưu ý: Viết trên cùng 1 dòng để Thymeleaf parse đúng mảng JS
+            const preSelectedIds = /*[[${preSelectedIds}]]*/[];
+
+            if (preSelectedIds && Array.isArray(preSelectedIds) && preSelectedIds.length > 0) {
+                preSelectedIds.forEach(id => {
+                    // Tìm nút bấm có ID tương ứng
+                    const btn = document.getElementById('btn-ing-' + id);
+                    if (btn) {
+                        // Giả lập hành động click để chạy logic chọn (Active nút + Thêm vào sidebar)
+                        toggleIngredient(btn);
+                    }
+                });
+            }
+
+            // 2. HIỂN THỊ TOAST TỪ URL (nếu có success param)
+            handleToastFromUrl();
+        });
+
+        // --- CÁC HÀM XỬ LÝ LOGIC ---
+
+        function toggleIngredient(element) {
+            // Lấy dữ liệu từ data-id và data-name
+            const id = parseInt(element.getAttribute('data-id'));
+            const name = element.getAttribute('data-name');
+            const btn = element;
+
+            if (selectedIds.includes(id)) {
+                // REMOVE: Nếu đã có thì bỏ chọn
+                selectedIds = selectedIds.filter(item => item !== id);
+                btn.classList.remove('selected-ing');
+                // Xóa style active (dựa theo Tailwind config của bạn)
+                btn.classList.remove('!bg-nutri-green', '!text-card-white', '!border-nutri-green');
+
+                removeTag(id);
+            } else {
+                // ADD: Nếu chưa có thì chọn
+                selectedIds.push(id);
+                btn.classList.add('selected-ing'); // Class CSS cũ (nếu dùng)
+                // Thêm style active của Tailwind để đảm bảo hiển thị đúng màu
+                btn.classList.add('!bg-nutri-green', '!text-card-white', '!border-nutri-green');
+
+                addTag(id, name, btn.id);
+            }
+            updateUI();
+        }
+
+        function addTag(id, name, btnId) {
+            const tag = document.createElement('div');
+            tag.id = 'tag-' + id;
+            tag.className = 'flex h-auto min-h-[32px] max-w-full items-center justify-between gap-x-2 rounded-full bg-nutri-green pl-3 pr-2 py-1 text-card-white animate-fade-in shadow-sm';
+
+            tag.innerHTML = `
+                <p class="text-sm font-medium whitespace-normal break-words leading-tight text-left flex-1">${name}</p>
+                
+                <button onclick="triggerRemove('${btnId}')" class="text-card-white/70 hover:text-card-white transition shrink-0 flex items-center">
+                    <span class="material-symbols-outlined !text-[18px]">close</span>
+                </button>
+            `;
+            selectedContainer.appendChild(tag);
+        }
+
+        // Hàm phụ trợ để gọi click vào nút gốc khi bấm X trên tag
+        function triggerRemove(btnId) {
+            const btn = document.getElementById(btnId);
+            if (btn)
+                btn.click();
+        }
+
+        function removeTag(id) {
+            const tag = document.getElementById('tag-' + id);
+            if (tag)
+                tag.remove();
+        }
+
+        function updateUI() {
+            const count = selectedIds.length;
+            const countDisplay = document.getElementById('countDisplay');
+            const emptyMsg = document.getElementById('emptyMsg');
+            const btnClearAll = document.getElementById('btnClearAll');
+
+            // Cập nhật số lượng
+            countDisplay.innerText = count;
+
+            if (count > 0) {
+                emptyMsg.style.display = 'none';
+                // Hiện nút Clear All
+                if (btnClearAll)
+                    btnClearAll.classList.remove('hidden');
+            } else {
+                emptyMsg.style.display = 'block';
+                // Ẩn nút Clear All
+                if (btnClearAll)
+                    btnClearAll.classList.add('hidden');
+            }
+        }
+
+        function filterIngredients() {
+            const input = document.getElementById('searchInput');
+            const filter = input.value.toLowerCase();
+            const buttons = document.getElementsByClassName('ingredient-btn');
+
+            for (let i = 0; i < buttons.length; i++) {
+                const txtValue = buttons[i].textContent || buttons[i].innerText;
+                // Tìm kiếm không phân biệt hoa thường
+                if (txtValue.toLowerCase().indexOf(filter) > -1) {
+                    buttons[i].parentElement.style.display = ""; // Hiển thị wrapper cha (nếu có grid)
+                    buttons[i].style.display = "";
+                } else {
+                    buttons[i].style.display = "none";
+                }
+            }
+        }
+
+        function submitSearch() {
+            if (selectedIds.length === 0) {
+                // Dùng Toast thay vì alert mặc định cho đẹp
+                if (typeof ZaderToast !== 'undefined') {
+                    ZaderToast.show("Vui lòng chọn ít nhất một nguyên liệu!", "error");
+                } else {
+                    alert("Vui lòng chọn ít nhất một nguyên liệu!");
+                }
+                return;
+            }
+            window.location.href = '/recipes/suggestions?ids=' + selectedIds.join(',');
+        }
+
+        function filterByCategory(categoryName) {
+            // 1. Ẩn/Hiện các section
+            const sections = document.querySelectorAll('.category-section');
+            sections.forEach(section => {
+                const sectionCat = section.getAttribute('data-category');
+                if (categoryName === 'all' || sectionCat === categoryName) {
+                    section.style.display = 'block';
+                } else {
+                    section.style.display = 'none';
+                }
+            });
+
+            // 2. Cập nhật nút Active
+            updateFilterButtonStyles(categoryName);
+        }
+
+        function updateFilterButtonStyles(activeCategoryName) {
+            const allButtons = document.querySelectorAll('.filter-btn');
+
+            // Style Active & Inactive (Tailwind classes)
+            const activeClass = ['bg-nutri-green', 'text-card-white', 'border-none'];
+            const inactiveClass = ['bg-card-white', 'border', 'border-smart-mist', 'text-dark-ink', 'hover:bg-gray-100', 'dark:bg-gray-800', 'dark:border-gray-600', 'dark:text-white'];
+
+            allButtons.forEach(btn => {
+                btn.classList.remove(...activeClass);
+                btn.classList.add(...inactiveClass);
+
+                let isMatch = false;
+                // Kiểm tra nút All hoặc nút Category cụ thể
+                if (activeCategoryName === 'all' && btn.id === 'btn-cat-all') {
+                    isMatch = true;
+                } else if (btn.getAttribute('data-cat') === activeCategoryName) {
+                    isMatch = true;
+                }
+
+                if (isMatch) {
+                    btn.classList.remove(...inactiveClass);
+                    btn.classList.add(...activeClass);
+                }
+            });
+        }
+
+        function handleToastFromUrl() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const successType = urlParams.get('success');
+
+            if (successType && typeof ZaderToast !== 'undefined') {
+                if (successType === 'request_submitted') {
+                    ZaderToast.success("Đã gửi yêu cầu! Đang chờ quản trị viên phê duyệt.");
+                } else if (successType === 'admin_added') {
+                    ZaderToast.success("Nguyên liệu mới đã được thêm thành công!");
+                }
+                // Xóa param trên URL để không hiện lại khi F5
+                const newUrl = window.location.pathname;
+                window.history.replaceState({}, document.title, newUrl);
+            }
+        }
+
+        // --- THÊM HÀM XÓA TẤT CẢ ---
+        function clearAllIngredients() {
+            // Duyệt qua mảng ID để bỏ chọn các nút bên trái
+            selectedIds.forEach(id => {
+                const btn = document.getElementById('btn-ing-' + id);
+                if (btn) {
+                    // Reset style về mặc định
+                    btn.classList.remove('selected-ing');
+                    // Xóa style active của Tailwind
+                    btn.classList.remove('!bg-nutri-green', '!text-card-white', '!border-nutri-green');
+                }
+                // Xóa tag bên phải
+                const tag = document.getElementById('tag-' + id);
+                if (tag)
+                    tag.remove();
+            });
+
+            // Reset mảng dữ liệu
+            selectedIds = [];
+
+            // Cập nhật giao diện
+            updateUI();
+        }
+    </script>
+</body>
+
+</html>

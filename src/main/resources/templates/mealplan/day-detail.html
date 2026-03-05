@@ -1,0 +1,1287 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{fragments/head :: common-head}">
+    <title>Chi Tiết Ngày</title>
+</head>
+
+<body class="bg-smart-white dark:bg-background-dark font-display min-h-screen flex flex-col">
+
+    <th:block th:replace="~{fragments/navbar :: header_nav}"></th:block>
+    <th:block th:replace="~{fragments/toast :: toast-system}"></th:block>
+
+    <style>
+        @media print {
+
+            /* Hide everything by default */
+            body * {
+                visibility: hidden;
+            }
+
+            /* Define the print area - We target the shopping list section */
+            #shoppingListSection,
+            #shoppingListSection * {
+                visibility: visible;
+            }
+
+            /* Position the printable area to the top-left */
+            #shoppingListSection {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                margin: 0;
+                padding: 0;
+                border: none;
+                box-shadow: none;
+            }
+
+            /* Hide elements inside the section that we don't want to print */
+            .no-print,
+            #paginationControls {
+                display: none !important;
+            }
+
+            /* Ensure table looks good */
+            table {
+                width: 100% !important;
+                border-collapse: collapse !important;
+            }
+
+            th,
+            td {
+                border: 1px solid #ddd !important;
+                padding: 8px !important;
+            }
+
+            /* Hide scrolling */
+            .overflow-x-auto {
+                overflow: visible !important;
+            }
+        }
+    </style>
+
+    <main class="flex-grow container mx-auto px-4 py-8 max-w-[1400px]">
+
+        <div class="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
+            <div class="flex items-center gap-4">
+                <a href="/meal-plan/history"
+                    class="p-2 rounded-full bg-white hover:bg-gray-200 transition-colors shadow-sm border border-gray-200">
+                    <span class="material-symbols-outlined">arrow_back</span>
+                </a>
+                <div>
+                    <h1 class="text-2xl md:text-3xl font-black text-dark-ink dark:text-white"
+                        th:text="${dayDetail.dayName}">Ngày</h1>
+                    <div class="flex items-center gap-2 text-sm text-gray-500">
+                        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-gray-200"></span> Kế
+                            Hoạch</span>
+                        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-orange-500"></span>
+                            Đã Ăn</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <section class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8" th:with="target=${targetCalories ?: 2000},
+                 eaten=${dayDetail.consumedCalories},
+                 remaining=${target - dayDetail.consumedCalories}">
+
+            <div
+                class="bg-white dark:bg-[#1a0e0a] p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col items-center justify-center relative">
+                <h3 class="absolute top-6 left-6 text-xs font-bold text-gray-400 uppercase">Calo Còn Lại</h3>
+
+                <div class="relative w-40 h-40 mt-4">
+                    <canvas id="caloriesDoughnut"></canvas>
+                    <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                        <span class="text-3xl font-black" th:classappend="${remaining <= 0}"
+                            th:text="${remaining < 0 ? 0 : remaining}">0</span> <span class="text-xs text-gray-400">kcal
+                            còn lại</span>
+                    </div>
+                </div>
+
+                <div
+                    class="flex justify-between w-full mt-6 px-4 text-sm border-t border-gray-100 dark:border-gray-700 pt-4">
+                    <div class="text-center">
+                        <span class="block text-gray-400 text-xs uppercase">Đã Ăn</span>
+                        <span class="font-bold text-orange-500 text-lg">[[${eaten}]]</span>
+                    </div>
+                    <div class="text-center">
+                        <span class="block text-gray-400 text-xs uppercase">Mục Tiêu</span>
+                        <span class="font-bold text-dark-ink dark:text-white text-lg">[[${target}]]</span>
+                    </div>
+                </div>
+            </div>
+
+            <div
+                class="lg:col-span-2 bg-white dark:bg-[#1a0e0a] p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col justify-center gap-6">
+                <div class="flex justify-between items-start border-b border-gray-100 dark:border-gray-700 pb-4">
+                    <div>
+                        <h3 class="text-lg font-bold text-dark-ink dark:text-white">Thành Phần Dinh Dưỡng</h3>
+                        <p class="text-sm text-gray-400">Theo dõi thực tế so với mục tiêu</p>
+                    </div>
+                    <span class="bg-gray-100 dark:bg-gray-800 text-gray-500 px-3 py-1 rounded-lg text-xs font-bold">
+                        [[${dayDetail.eatenMeals}]] / [[${dayDetail.totalMeals}]] bữa ăn hoàn thành
+                    </span>
+                </div>
+
+                <div class="space-y-6">
+                    <div th:with="curr=${dayDetail.consumedProtein}, max=${targetProt ?: 1}">
+                        <div class="flex justify-between text-sm mb-2 font-bold">
+                            <span class="text-blue-600">Protein</span>
+                            <span class="text-dark-ink dark:text-white">[[${curr}]] <span
+                                    class="text-gray-400 font-normal">/ [[${max}]]g</span></span>
+                        </div>
+                        <div class="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-4 overflow-hidden">
+                            <div class="h-full rounded-full transition-all duration-1000 shadow-sm flex items-center justify-end pr-2 text-[10px] text-white font-bold"
+                                th:classappend="${curr > max} ? 'bg-red-500' : 'bg-blue-500'"
+                                th:style="'width: ' + ${T(java.lang.Math).min(curr * 100.0 / max, 100.0)} + '%'">
+                                <span th:if="${curr > 0}"
+                                    th:text="${#numbers.formatDecimal(curr * 100.0 / max, 0, 0)} + '%'"></span>
+                            </div>
+                        </div>
+                        <p th:if="${curr > max}" class="text-xs text-red-500 mt-1 font-bold flex items-center gap-1">
+                            <span class="material-symbols-outlined text-sm">warning</span> Vượt quá giới hạn!
+                        </p>
+                    </div>
+
+                    <div th:with="curr=${dayDetail.consumedCarbs}, max=${targetCarb ?: 1}">
+                        <div class="flex justify-between text-sm mb-2 font-bold">
+                            <span class="text-green-600">Carbs</span>
+                            <span class="text-dark-ink dark:text-white">[[${curr}]] <span
+                                    class="text-gray-400 font-normal">/ [[${max}]]g</span></span>
+                        </div>
+                        <div class="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-4 overflow-hidden">
+                            <div class="h-full rounded-full transition-all duration-1000 shadow-sm flex items-center justify-end pr-2 text-[10px] text-white font-bold"
+                                th:classappend="${curr > max} ? 'bg-red-500' : 'bg-green-500'"
+                                th:style="'width: ' + ${T(java.lang.Math).min(curr * 100.0 / max, 100.0)} + '%'">
+                                <span th:if="${curr > 0}"
+                                    th:text="${#numbers.formatDecimal(curr * 100.0 / max, 0, 0)} + '%'"></span>
+                            </div>
+                        </div>
+                        <p th:if="${curr > max}" class="text-xs text-red-500 mt-1 font-bold flex items-center gap-1">
+                            <span class="material-symbols-outlined text-sm">warning</span> Vượt quá giới hạn!
+                        </p>
+                    </div>
+
+                    <div th:with="curr=${dayDetail.consumedFat}, max=${targetFat ?: 1}">
+                        <div class="flex justify-between text-sm mb-2 font-bold">
+                            <span class="text-yellow-600">Fat</span>
+                            <span class="text-dark-ink dark:text-white">[[${curr}]] <span
+                                    class="text-gray-400 font-normal">/ [[${max}]]g</span></span>
+                        </div>
+                        <div class="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-4 overflow-hidden">
+                            <div class="h-full rounded-full transition-all duration-1000 shadow-sm flex items-center justify-end pr-2 text-[10px] text-white font-bold"
+                                th:classappend="${curr > max} ? 'bg-red-500' : 'bg-yellow-500'"
+                                th:style="'width: ' + ${T(java.lang.Math).min(curr * 100.0 / max, 100.0)} + '%'">
+                                <span th:if="${curr > 0}"
+                                    th:text="${#numbers.formatDecimal(curr * 100.0 / max, 0, 0)} + '%'"></span>
+                            </div>
+                        </div>
+                        <p th:if="${curr > max}" class="text-xs text-red-500 mt-1 font-bold flex items-center gap-1">
+                            <span class="material-symbols-outlined text-sm">warning</span> Vượt quá giới hạn!
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div th:if="${not #lists.isEmpty(dayDetail.suggestions)}" class="mb-8 animate-fade-in-up">
+            <div class="flex items-center gap-2 mb-4">
+                <span class="material-symbols-outlined text-orange-500">lightbulb</span>
+                <h3 class="font-bold text-dark-ink dark:text-white text-lg">Gợi Ý Cho Bạn</h3>
+                <span class="text-xs text-gray-500 bg-gray-100 dark:bg-white/10 px-2 py-1 rounded">Dựa trên lượng macros
+                    còn thiếu</span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div th:each="sugg : ${dayDetail.suggestions}"
+                    class="bg-white dark:bg-[#1e1e1e] border border-orange-100 dark:border-orange-900/30 p-3 rounded-xl flex gap-3 shadow-sm hover:shadow-md transition-all relative group">
+                    <img th:src="${sugg.imageUrl != null ? sugg.imageUrl : 'https://placehold.co/100?text=Food'}"
+                        class="w-20 h-20 rounded-lg object-cover flex-shrink-0 bg-gray-100">
+
+                    <div class="flex flex-col justify-between flex-grow">
+                        <div>
+                            <h4 class="font-bold text-sm text-dark-ink dark:text-white line-clamp-1"
+                                th:text="${sugg.recipeName}">Tên Món</h4>
+                            <p class="text-xs text-orange-600 font-bold">[[${sugg.calories}]] kcal</p>
+                        </div>
+                        <div class="flex gap-2 text-[10px] text-gray-400">
+                            <span class="text-blue-500">P: [[${sugg.protein}]]</span>
+                            <span class="text-green-500">C: [[${sugg.carbs}]]</span>
+                            <span class="text-yellow-500">F: [[${sugg.fat}]]</span>
+                        </div>
+                    </div>
+
+                    <button th:onclick="'quickAddRecipe(' + ${sugg.mealItemId} + ')'"
+                        class="absolute bottom-3 right-3 bg-orange-50 hover:bg-orange-500 text-orange-600 hover:text-white p-1.5 rounded-lg transition-colors shadow-sm"
+                        title="Thêm vào ăn vặt">
+                        <span class="material-symbols-outlined text-lg">add</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="flex items-center gap-2 mb-4 mt-3">
+            <span class="material-symbols-outlined text-orange-500">menu_book_2</span>
+            <h3 class="font-bold text-dark-ink dark:text-white text-lg">Thực đơn hôm nay</h3>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start mt-2">
+            <div class="flex flex-col gap-4">
+                <div
+                    class="sticky top-20 z-10 bg-gray-50/90 backdrop-blur-sm p-3 rounded-xl flex justify-between items-center border border-gray-200 shadow-sm">
+                    <span class="font-black text-gray-500 uppercase tracking-wider text-sm pl-2">Bữa Sáng</span>
+                    <div class="flex gap-2">
+                        <button onclick="skipMeal('Breakfast')" title="Bỏ qua tất cả"
+                            class="p-2 bg-white hover:bg-red-50 text-gray-400 hover:text-red-500 rounded-lg transition-colors shadow-sm border border-gray-200">
+                            <span class="material-symbols-outlined text-lg">block</span>
+                        </button>
+                        <button onclick="openReplaceModal(null, 'Breakfast')" title="Thêm món"
+                            class="p-2 bg-white hover:bg-orange-50 text-gray-400 hover:text-orange-500 rounded-lg transition-colors shadow-sm border border-gray-200">
+                            <span class="material-symbols-outlined text-lg">add</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="flex flex-col gap-4 min-h-[100px]">
+                    <th:block th:each="meal : ${dayDetail.meals}">
+                        <th:block th:if="${meal != null and (meal.type == 'Breakfast' or meal.type == 'BREAKFAST')}">
+                            <div th:replace="~{fragments/meal-card-fragment::mealCardFragment(${meal})}"></div>
+                        </th:block>
+                    </th:block>
+                </div>
+            </div>
+
+            <div class="flex flex-col gap-4">
+                <div
+                    class="sticky top-20 z-10 bg-gray-50/90 backdrop-blur-sm p-3 rounded-xl flex justify-between items-center border border-gray-200 shadow-sm">
+                    <span class="font-black text-gray-500 uppercase tracking-wider text-sm pl-2">Bữa Trưa</span>
+                    <div class="flex gap-2">
+                        <button onclick="skipMeal('Lunch')" title="Bỏ qua tất cả"
+                            class="p-2 bg-white hover:bg-red-50 text-gray-400 hover:text-red-500 rounded-lg transition-colors shadow-sm border border-gray-200">
+                            <span class="material-symbols-outlined text-lg">block</span>
+                        </button>
+                        <button onclick="openReplaceModal(null, 'Lunch')" title="Thêm món"
+                            class="p-2 bg-white hover:bg-orange-50 text-gray-400 hover:text-orange-500 rounded-lg transition-colors shadow-sm border border-gray-200">
+                            <span class="material-symbols-outlined text-lg">add</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="flex flex-col gap-4 min-h-[100px]">
+                    <th:block th:each="meal : ${dayDetail.meals}">
+                        <th:block th:if="${meal != null and (meal.type == 'Lunch' or meal.type == 'LUNCH')}">
+                            <div th:replace="~{fragments/meal-card-fragment::mealCardFragment(${meal})}"></div>
+                        </th:block>
+                    </th:block>
+                </div>
+            </div>
+
+            <div class="flex flex-col gap-4">
+                <div
+                    class="sticky top-20 z-10 bg-gray-50/90 backdrop-blur-sm p-3 rounded-xl flex justify-between items-center border border-gray-200 shadow-sm">
+                    <span class="font-black text-gray-500 uppercase tracking-wider text-sm pl-2">Bữa Tối</span>
+                    <div class="flex gap-2">
+                        <button onclick="skipMeal('Dinner')" title="Bỏ qua tất cả"
+                            class="p-2 bg-white hover:bg-red-50 text-gray-400 hover:text-red-500 rounded-lg transition-colors shadow-sm border border-gray-200">
+                            <span class="material-symbols-outlined text-lg">block</span>
+                        </button>
+                        <button onclick="openReplaceModal(null, 'Dinner')" title="Thêm món"
+                            class="p-2 bg-white hover:bg-orange-50 text-gray-400 hover:text-orange-500 rounded-lg transition-colors shadow-sm border border-gray-200">
+                            <span class="material-symbols-outlined text-lg">add</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="flex flex-col gap-4 min-h-[100px]">
+                    <th:block th:each="meal : ${dayDetail.meals}">
+                        <th:block th:if="${meal != null and (meal.type == 'Dinner' or meal.type == 'DINNER')}">
+                            <div th:replace="~{fragments/meal-card-fragment::mealCardFragment(${meal})}"></div>
+                        </th:block>
+                    </th:block>
+                </div>
+            </div>
+
+        </div>
+        <section id="shoppingListSection"
+            class="bg-white dark:bg-[#1a0e0a] rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mt-8 mb-12">
+            <div
+                class="p-6 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 flex justify-between items-center">
+                <div>
+                    <h2 class="text-xl font-black text-dark-ink dark:text-white flex items-center gap-2">
+                        <span class="material-symbols-outlined text-green-600">checklist</span>
+                        Danh Sách Mua Sắm Trong Ngày
+                    </h2>
+                    <p class="text-sm text-gray-500">Nguyên liệu cần cho các bữa ăn hôm nay.</p>
+                </div>
+                <span class="text-xs font-bold bg-green-100 text-green-700 px-3 py-1 rounded-full">
+                    [[${dayDetail.dailyIngredients != null ? #lists.size(dayDetail.dailyIngredients) : 0}]] Món
+                </span>
+            </div>
+
+            <div class="flex gap-2 p-4">
+                <button onclick="exportToExcel()"
+                    class="flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 text-green-600 rounded-lg hover:bg-green-50 text-xs font-bold transition-all shadow-sm">
+                    <span class="material-symbols-outlined text-sm">download</span>Xem bằng Excel
+                </button>
+                <button onclick="sendEmail()"
+                    class="flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 text-blue-600 rounded-lg hover:bg-blue-50 text-xs font-bold transition-all shadow-sm">
+                    <span class="material-symbols-outlined text-sm">mail</span>Gửi Email
+                </button>
+                <button onclick="printShoppingList()"
+                    class="flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 text-xs font-bold transition-all shadow-sm">
+                    <span class="material-symbols-outlined text-sm">print</span> In
+                </button>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse" id="shoppingTable">
+                    <thead>
+                        <tr class="text-xs font-bold text-gray-400 border-b border-gray-100 dark:border-gray-800">
+                            <th class="p-4 uppercase tracking-wider">Nguyên liệu</th>
+                            <th class="p-4 uppercase tracking-wider w-32">Số lượng</th>
+                            <th class="p-4 uppercase tracking-wider w-32 text-center">Đánh dấu</th>
+                        </tr>
+                    </thead>
+                    <tbody id="shoppingListBody" class="text-sm divide-y divide-gray-100 dark:divide-gray-800">
+                        <tr th:each="item : ${dayDetail.dailyIngredients}"
+                            class="shopping-item group hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                            <td class="p-4">
+                                <div class="flex items-center gap-3">
+                                    <div
+                                        class="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden flex-shrink-0">
+                                        <img th:src="${item.imageUrl == null ? 'https://placehold.co/100x100?text=No+Img' : (#strings.startsWith(item.imageUrl, 'http') ? item.imageUrl : '/images/' + item.imageUrl)}"
+                                            onerror="this.onerror=null; this.src='https://placehold.co/100x100?text=Err'"
+                                            class="w-full h-full object-cover">
+                                    </div>
+                                    <div>
+                                        <p class="font-bold text-dark-ink dark:text-white" th:text="${item.name}">Tên
+                                        </p>
+                                        <p class="text-xs text-gray-400" th:text="${item.category}">Danh mục</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="p-4 font-medium text-gray-600 dark:text-gray-300" th:text="${item.quantity}">SL
+                            </td>
+                            <td class="p-4 text-center">
+                                <input type="checkbox"
+                                    class="w-5 h-5 text-green-600 rounded border-gray-300 focus:ring-green-500 cursor-pointer">
+                            </td>
+                        </tr>
+
+                        <tr th:if="${#lists.isEmpty(dayDetail.dailyIngredients)}">
+                            <td colspan="3" class="p-8 text-center text-gray-400">
+                                <div class="flex flex-col items-center">
+                                    <span
+                                        class="material-symbols-outlined text-4xl mb-2 text-gray-300">shopping_basket</span>
+                                    <p>Không tìm thấy nguyên liệu. Bạn đã gán công thức cho các bữa ăn chưa?</p>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div id="paginationControls"
+                class="p-4 border-t border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50/30"
+                th:if="${not #lists.isEmpty(dayDetail.dailyIngredients)}">
+                <span class="text-xs text-gray-500">Hiển thị <span id="pageInfo">1-5</span> của
+                    [[${#lists.size(dayDetail.dailyIngredients)}]] món</span>
+                <div class="flex gap-2">
+                    <button onclick="changePage(-1)" id="btnPrev"
+                        class="px-3 py-1 rounded bg-white border border-gray-200 text-gray-600 text-xs font-bold hover:bg-gray-100 disabled:opacity-50">Trước</button>
+                    <button onclick="changePage(1)" id="btnNext"
+                        class="px-3 py-1 rounded bg-white border border-gray-200 text-gray-600 text-xs font-bold hover:bg-gray-100 disabled:opacity-50">Sau</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div id="replaceModal" class="fixed inset-0 z-50 hidden" aria-labelledby="modal-title" role="dialog"
+        aria-modal="true">
+        <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity" onclick="closeModal()"></div>
+        <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
+            <div
+                class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-lg border border-gray-100">
+
+                <div class="bg-white px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+                    <h3 class="text-lg font-black text-dark-ink flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary">edit_note</span> Cập Nhật Bữa Ăn
+                    </h3>
+                    <button onclick="closeModal()"
+                        class="text-gray-400 hover:text-gray-600 rounded-full p-1 transition-colors"><span
+                            class="material-symbols-outlined">close</span></button>
+                </div>
+
+                <div class="flex border-b border-gray-100">
+                    <button onclick="switchTab('AI')" id="tabAI"
+                        class="flex-1 py-3 text-sm font-bold text-primary border-b-2 border-primary bg-primary/5 transition-all">
+                        ✨ Phân Tích Bằng AI
+                    </button>
+                    <button onclick="switchTab('MANUAL')" id="tabManual"
+                        class="flex-1 py-3 text-sm font-bold text-gray-500 hover:text-dark-ink transition-all">
+                        📝 Nhập Thủ Công
+                    </button>
+                </div>
+
+                <div class="px-6 py-6 flex flex-col gap-5">
+
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Tên Món Ăn <span
+                                class="text-red-500">*</span></label>
+                        <input type="text" id="replaceName" placeholder="vd: Cá hồi nướng"
+                            class="w-full rounded-lg border-gray-200 bg-gray-50 text-sm focus:border-primary focus:ring-primary">
+                    </div>
+
+                    <div id="sectionAI" class="flex flex-col gap-4">
+                        <div class="w-full">
+                            <label for="replaceImage"
+                                class="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer bg-gray-50 hover:bg-orange-50 hover:border-orange-300 transition-all group overflow-hidden relative">
+                                <img id="previewImg"
+                                    class="absolute inset-0 w-full h-full object-cover hidden opacity-90">
+                                <div id="uploadPlaceholder"
+                                    class="flex flex-col items-center justify-center pt-5 pb-6 group-hover:scale-105 transition-transform">
+                                    <span
+                                        class="material-symbols-outlined text-3xl text-gray-400 group-hover:text-orange-500 mb-2">add_a_photo</span>
+                                    <p class="mb-1 text-xs text-gray-500">Tải ảnh để AI quét</p>
+                                </div>
+                                <input id="replaceImage" type="file" class="hidden" accept="image/*"
+                                    onchange="previewFile()">
+                            </label>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Mô tả thêm (Tùy
+                                chọn)</label>
+                            <textarea id="replaceDesc" rows="2"
+                                placeholder="Mô tả thành phần để AI dự đoán chính xác hơn..."
+                                class="w-full rounded-lg border-gray-200 bg-gray-50 text-sm resize-none focus:border-primary focus:ring-primary"></textarea>
+                        </div>
+
+                        <div id="aiResultArea"
+                            class="hidden p-3 bg-orange-50 rounded-xl border border-orange-100 animate-fade-in-up">
+                            <div class="flex justify-between items-center mb-2">
+                                <p class="text-xs font-bold text-orange-600">✨ AI Ước Lượng:</p>
+                                <button onclick="useAiResult()"
+                                    class="text-[10px] bg-white border border-orange-200 px-2 py-1 rounded hover:bg-orange-100 text-orange-600 font-bold">Áp
+                                    Dụng Dữ Liệu</button>
+                            </div>
+                            <div class="grid grid-cols-4 gap-2 text-center text-xs">
+                                <div><span class="block font-black" id="aiCalVal">0</span> calo</div>
+                                <div><span class="block font-bold text-blue-600" id="aiProtVal">0</span>g Đạm</div>
+                                <div><span class="block font-bold text-green-600" id="aiCarbVal">0</span>g Tinh bột
+                                </div>
+                                <div><span class="block font-bold text-yellow-600" id="aiFatVal">0</span>g Chất béo
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="sectionManual" class="hidden flex flex-col gap-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Calo
+                                    (kcal)</label>
+                                <input type="number" id="manualCal"
+                                    class="w-full rounded-lg border-gray-200 bg-white text-sm font-bold text-dark-ink focus:border-primary focus:ring-primary">
+                            </div>
+                            <div></div>
+                        </div>
+                        <div class="grid grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-blue-500 uppercase mb-1">Đạm (g)</label>
+                                <input type="number" id="manualProt"
+                                    class="w-full rounded-lg border-blue-100 bg-blue-50/30 text-sm focus:border-blue-500 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-green-500 uppercase mb-1">Tinh bột
+                                    (g)</label>
+                                <input type="number" id="manualCarb"
+                                    class="w-full rounded-lg border-green-100 bg-green-50/30 text-sm focus:border-green-500 focus:ring-green-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-yellow-600 uppercase mb-1">Chất béo
+                                    (g)</label>
+                                <input type="number" id="manualFat"
+                                    class="w-full rounded-lg border-yellow-100 bg-yellow-50/30 text-sm focus:border-yellow-500 focus:ring-yellow-500">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-50 px-6 py-4 flex flex-row-reverse gap-2 border-t border-gray-100">
+                    <button type="button" id="btnConfirm" onclick="confirmReplace()"
+                        class="hidden w-full inline-flex justify-center items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-bold text-white hover:bg-green-500 shadow-lg shadow-green-200 sm:w-auto transition-all">
+                        <span class="material-symbols-outlined text-lg">check</span> Lưu Bữa Ăn
+                    </button>
+
+                    <button type="button" id="btnAnalyze" onclick="analyzeFood()"
+                        class="w-full inline-flex justify-center items-center gap-2 rounded-lg bg-orange-500 px-4 py-2 text-sm font-bold text-white hover:bg-orange-600 shadow-lg shadow-orange-200 sm:w-auto transition-all">
+                        <span class="material-symbols-outlined text-lg">auto_awesome</span> Phân Tích
+                    </button>
+
+                    <button onclick="closeModal()"
+                        class="mt-3 inline-flex w-full justify-center rounded-lg bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto">Hủy</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="mealSelectModal" class="fixed inset-0 z-[60] hidden" aria-labelledby="modal-title" role="dialog"
+        aria-modal="true">
+        <div class="fixed inset-0 bg-gray-900/40 backdrop-blur-[2px] transition-opacity"
+            onclick="closeMealSelectModal()"></div>
+
+        <div class="flex min-h-full items-center justify-center p-4 text-center">
+            <div
+                class="relative transform overflow-hidden rounded-xl bg-white text-left shadow-xl transition-all sm:w-full sm:max-w-sm border border-gray-100 p-5">
+
+                <h3 class="text-lg font-bold text-dark-ink mb-2">Thêm Vào Kế Hoạch</h3>
+                <p class="text-sm text-gray-500 mb-4">Chọn bữa ăn để thêm món này vào:</p>
+
+                <div class="mb-5">
+                    <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Loại Bữa Ăn</label>
+                    <select id="targetMealType"
+                        class="w-full rounded-lg border-gray-200 bg-gray-50 text-sm focus:border-orange-500 focus:ring-orange-500 py-2.5">
+                    </select>
+                </div>
+
+                <div class="flex gap-2">
+                    <button onclick="closeMealSelectModal()"
+                        class="flex-1 px-4 py-2 bg-gray-100 text-gray-600 rounded-lg text-sm font-bold hover:bg-gray-200 transition-all">Hủy</button>
+                    <button onclick="confirmAddToPlan()"
+                        class="flex-1 px-4 py-2 bg-orange-500 text-white rounded-lg text-sm font-bold hover:bg-orange-600 shadow-md shadow-orange-200 transition-all">
+                        Thêm Món
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <th:block th:replace="~{fragments/footer :: footer_section}"></th:block>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script th:inline="javascript">
+        // 1. CONFIG & GLOBALS
+        const CSRF_TOKEN = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
+        const CSRF_HEADER = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content');
+        // Check authentication safely using Thymeleaf
+        const USER_ID = /*[[${#authentication != null and #authentication.principal != 'anonymousUser' ? #authentication.principal.userId : 0}]]*/ 0;
+
+        // Fallback for ZaderToast if not loaded
+        window.ZaderToast = window.ZaderToast || {
+            success: (msg) => alert("✅ " + msg),
+            error: (msg) => alert("❌ " + msg),
+            info: (msg) => alert("ℹ️ " + msg),
+            loading: (msg) => {
+                console.log(msg);
+                return 'temp-id';
+            },
+            remove: (id) => {
+            }
+        };
+
+        // --- UTILITIES ---
+
+        async function fetchPost(url, bodyData = {}) {
+            const formData = new FormData();
+            for (const k in bodyData)
+                formData.append(k, bodyData[k]);
+
+            const headers = {};
+            if (CSRF_TOKEN && CSRF_HEADER)
+                headers[CSRF_HEADER] = CSRF_TOKEN;
+
+            return await fetch(url, {
+                method: 'POST',
+                headers: headers,
+                body: formData
+            });
+        }
+
+        function getPageParams() {
+            const urlParts = window.location.pathname.split('/');
+            const dateStr = urlParts[urlParts.length - 1];
+            return { dateStr, userId: USER_ID };
+        }
+
+        // --- INITIALIZATION ---
+        document.addEventListener('DOMContentLoaded', function () {
+            initChart();
+            initPagination();
+        });
+
+        function initChart() {
+            const eaten = /*[[${dayDetail.consumedCalories}]]*/ 0;
+            const target = /*[[${targetCalories ?: 2000}]]*/ 2000;
+
+            // [FIX] Nếu ăn vượt quá target, remaining sẽ là 0 (để biểu đồ không bị lỗi)
+            // Số calo thừa sẽ được hiển thị bằng màu đỏ và text âm
+            const chartRemaining = Math.max(0, target - eaten);
+
+            console.log(chartRemaining);
+            const ctx = document.getElementById('caloriesDoughnut');
+            if (ctx) {
+                new Chart(ctx.getContext('2d'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Eaten', 'Remaining'],
+                        datasets: [{
+                            // [FIX] Dữ liệu vẽ biểu đồ: Nếu vượt quá, coi như đã ăn 100% (target) để vòng tròn đỏ đầy
+                            data: [eaten > target ? target : eaten, chartRemaining],
+                            backgroundColor: [
+                                '#F97316', // <--- Luôn dùng màu Cam (Xóa điều kiện check if/else đi)
+                                '#F3F4F6'   // Màu xám nền
+                            ],
+                            borderWidth: 0,
+                            hoverOffset: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '85%',
+                        plugins: { legend: { display: false }, tooltip: { enabled: false } }
+                    }
+                });
+            }
+        }
+
+        // --- 1. MEAL ACTIONS (Mark, Undo, Skip, Snack) ---
+
+        async function markAsEaten(id) {
+            if (!id || id === 'null') {
+                ZaderToast.error("Lỗi: Thiếu ID món ăn");
+                return;
+            }
+            try {
+                const res = await fetchPost(`/api/meal-plan/item/${id}/status`, { status: 'EATEN' });
+                if (res.ok) {
+                    ZaderToast.success("Đã đánh dấu là Đã Ăn!");
+                    setTimeout(() => location.reload(), 500);
+                } else {
+                    ZaderToast.error("Cập nhật trạng thái thất bại.");
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        async function undoStatus(id) {
+            try {
+                const res = await fetchPost(`/api/meal-plan/item/${id}/status`, { status: 'PENDING' });
+                if (res.ok) {
+                    ZaderToast.success("Đã khôi phục trạng thái.");
+                    setTimeout(() => location.reload(), 500);
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function skipMeal(type) {
+            Swal.fire({
+                title: `Bỏ qua ${type}?`,
+                text: "Đánh dấu các món đã bỏ qua?",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonText: 'Hủy',
+                confirmButtonText: 'Có, Bỏ qua'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Cần triển khai API backend cho việc skip theo MealType
+                    ZaderToast.success("Đã bỏ qua bữa ăn (Mô phỏng).");
+                    setTimeout(() => location.reload(), 1000);
+                }
+            });
+        }
+
+        // --- 2. SHOPPING ACTIONS (Export, Email) ---
+
+        function exportToExcel() {
+            const { dateStr } = getPageParams();
+            if (USER_ID === 0) {
+                ZaderToast.error("Vui lòng đăng nhập.");
+                return;
+            }
+            // Redirect to download
+            window.location.href = `/api/meal-plan/shopping-list/export-excel?dateStr=${dateStr}`;
+        }
+
+        async function sendEmail() {
+            const { dateStr } = getPageParams();
+            if (USER_ID === 0) {
+                ZaderToast.error("Vui lòng đăng nhập.");
+                return;
+            }
+
+            const loadingId = ZaderToast.loading("Đang gửi email...");
+            try {
+                const res = await fetchPost('/api/meal-plan/shopping-list/send-email', { dateStr: dateStr });
+
+                if (res.ok) {
+                    ZaderToast.remove(loadingId);
+                    ZaderToast.success("Email đã được gửi! Vui lòng kiểm tra hộp thư.");
+                } else {
+                    const data = await res.json();
+                    ZaderToast.remove(loadingId);
+                    ZaderToast.error(data.error || "Gửi email thất bại.");
+                }
+            } catch (e) {
+                ZaderToast.remove(loadingId);
+                ZaderToast.error("Lỗi kết nối.");
+            }
+        }
+
+        // --- 3. MODAL LOGIC (ĐÃ SỬA LỖI) ---
+        let currentItemId = null;
+        let currentMealType = null;
+        let currentMode = 'AI'; // Biến theo dõi chế độ hiện tại
+
+        // [QUAN TRỌNG] Hàm switchTab bị thiếu trước đó
+        function switchTab(mode) {
+            currentMode = mode;
+
+            // Lấy các phần tử an toàn (kiểm tra tồn tại trước khi thao tác)
+            const tabAI = document.getElementById('tabAI');
+            const tabManual = document.getElementById('tabManual');
+            const secAI = document.getElementById('sectionAI');
+            const secManual = document.getElementById('sectionManual');
+            const btnAnalyze = document.getElementById('btnAnalyze');
+            const btnConfirm = document.getElementById('btnConfirm');
+
+            if (!tabAI || !secAI)
+                return; // Chặn lỗi nếu HTML chưa update
+
+            if (mode === 'AI') {
+                // UI: Active Tab AI
+                tabAI.className = "flex-1 py-3 text-sm font-bold text-primary border-b-2 border-primary bg-primary/5 transition-all";
+                tabManual.className = "flex-1 py-3 text-sm font-bold text-gray-500 hover:text-dark-ink transition-all";
+
+                secAI.classList.remove('hidden');
+                secManual.classList.add('hidden');
+
+                if (btnAnalyze)
+                    btnAnalyze.classList.remove('hidden');
+                if (btnConfirm)
+                    btnConfirm.classList.add('hidden');
+            } else {
+                // UI: Active Tab Manual
+                tabManual.className = "flex-1 py-3 text-sm font-bold text-primary border-b-2 border-primary bg-primary/5 transition-all";
+                tabAI.className = "flex-1 py-3 text-sm font-bold text-gray-500 hover:text-dark-ink transition-all";
+
+                secManual.classList.remove('hidden');
+                secAI.classList.add('hidden');
+
+                if (btnAnalyze)
+                    btnAnalyze.classList.add('hidden');
+                if (btnConfirm)
+                    btnConfirm.classList.remove('hidden');
+            }
+        }
+
+        function deleteMealItem(id) {
+            Swal.fire({
+                title: 'Xóa món ăn này?',
+                text: "Hành động này không thể hoàn tác!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonText: 'Hủy',
+                confirmButtonText: 'Có, xóa nó!'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    try {
+                        const res = await fetch(`/api/meal-plan/item/${id}`, {
+                            method: 'DELETE',
+                            headers: {
+                                [CSRF_HEADER]: CSRF_TOKEN // Quan trọng: Phải có CSRF cho Delete
+                            }
+                        });
+
+                        if (res.ok) {
+                            ZaderToast.success("Đã xóa món ăn.");
+                            setTimeout(() => location.reload(), 500);
+                        } else {
+                            ZaderToast.error("Xóa thất bại.");
+                        }
+                    } catch (e) {
+                        ZaderToast.error("Lỗi kết nối.");
+                    }
+                }
+            });
+        }
+
+        async function openReplaceModal(itemId, mealType) {
+            currentMealType = mealType;
+            currentItemId = itemId;
+
+            resetModal(); // Reset form trắng trước
+
+            // Nếu có itemId -> Là chế độ EDIT -> Gọi API lấy dữ liệu cũ fill vào form
+            if (itemId) {
+                try {
+                    // Hiển thị loading nhẹ hoặc disable form lúc đang fetch...
+                    const res = await fetch(`/api/meal-plan/item/${itemId}`);
+                    if (res.ok) {
+                        const data = await res.json();
+
+                        // Fill vào Tab Manual
+                        document.getElementById('replaceName').value = data.customDishName || "";
+                        document.getElementById('manualCal').value = data.calories || 0;
+                        document.getElementById('manualProt').value = data.protein || 0;
+                        document.getElementById('manualCarb').value = data.carbs || 0;
+                        document.getElementById('manualFat').value = data.fat || 0;
+
+                        // Chuyển ngay sang tab Manual để user sửa
+                        switchTab('MANUAL');
+
+                        // Đổi nút Confirm thành "Update"
+                        document.getElementById('btnConfirm').innerHTML = '<span class="material-symbols-outlined text-lg">save</span> Cập Nhật Bữa Ăn';
+                    }
+                } catch (e) {
+                    console.error("Error fetching item details", e);
+                }
+            } else {
+                // Nếu không có ID -> ADD NEW -> Mặc định tab AI
+                switchTab('AI');
+                document.getElementById('btnConfirm').innerHTML = '<span class="material-symbols-outlined text-lg">add</span> Thêm Món';
+            }
+
+            const modal = document.getElementById('replaceModal');
+            if (modal)
+                modal.classList.remove('hidden');
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('replaceModal');
+            if (modal)
+                modal.classList.add('hidden');
+        }
+
+        function resetModal() {
+            // Helper set value an toàn
+            const setVal = (id, val) => {
+                const el = document.getElementById(id);
+                if (el)
+                    el.value = val;
+            };
+            // Helper ẩn hiện class an toàn
+            const addClass = (id, cls) => {
+                const el = document.getElementById(id);
+                if (el)
+                    el.classList.add(cls);
+            };
+            const removeClass = (id, cls) => {
+                const el = document.getElementById(id);
+                if (el)
+                    el.classList.remove(cls);
+            };
+
+            setVal('replaceImage', "");
+            addClass('previewImg', 'hidden');
+            removeClass('uploadPlaceholder', 'opacity-0');
+            setVal('replaceName', "");
+            setVal('replaceDesc', "");
+
+            // Reset vùng kết quả
+            addClass('aiResultArea', 'hidden');
+            addClass('btnConfirm', 'hidden');
+
+            // Reset nút Analyze
+            const btnAnalyze = document.getElementById('btnAnalyze');
+            if (btnAnalyze) {
+                btnAnalyze.classList.remove('hidden');
+                btnAnalyze.disabled = false;
+                // Khôi phục nội dung gốc của nút (Icon + Text)
+                btnAnalyze.innerHTML = '<span class="material-symbols-outlined text-lg">auto_awesome</span> Phân Tích';
+            }
+        }
+
+        async function analyzeFood() {
+            const fileInput = document.getElementById('replaceImage');
+            const nameInput = document.getElementById('replaceName');
+            const descInput = document.getElementById('replaceDesc');
+
+            // Lấy dữ liệu input
+            const file = fileInput ? fileInput.files[0] : null;
+            const name = nameInput ? nameInput.value : "";
+            const desc = descInput ? descInput.value : "";
+
+            // Kết hợp Name và Desc để AI hiểu rõ hơn (Ví dụ: "Phở bò. Không hành")
+            const fullDescription = name + (desc ? ". " + desc : "");
+            if (!file || !name) {
+                if (window.ZaderToast)
+                    ZaderToast.error("Vui lòng tải ảnh lên hoặc nhập tên món ăn.");
+                return;
+            }
+
+
+            const btnAnalyze = document.getElementById('btnAnalyze');
+            if (!btnAnalyze)
+                return;
+
+            // UI Loading
+            btnAnalyze.disabled = true;
+            // Giữ lại icon SVG spinner
+            btnAnalyze.innerHTML = `Đang phân tích... <svg class="animate-spin ml-1 h-4 w-4 inline-block text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>`;
+
+            try {
+                // Gọi API thật bằng hàm fetchPost có sẵn
+                // Lưu ý: fetchPost của bạn đã hỗ trợ tự động tạo FormData khi truyền object
+                const res = await fetchPost('/api/meal-plan/analyze-food', {
+                    image: file, // File object
+                    description: fullDescription // String
+                });
+
+                if (res.ok) {
+                    const result = await res.json();
+
+                    // --- XỬ LÝ KẾT QUẢ TỪ AI ---
+
+                    // Helper parse số an toàn (Vì AI có thể trả về "30g" hoặc 30)
+                    const parseVal = (v) => {
+                        if (typeof v === 'number')
+                            return v;
+                        return v ? parseFloat(v.toString().replace(/[^\d.]/g, '')) || 0 : 0;
+                    };
+
+                    const finalData = {
+                        cal: result.calories || 0,
+                        pro: parseVal(result.protein),
+                        carb: parseVal(result.carbs),
+                        fat: parseVal(result.fat)
+                    };
+
+                    // 1. Điền vào vùng hiển thị AI Result
+                    const elCal = document.getElementById('aiCalVal');
+                    const elPro = document.getElementById('aiProtVal');
+                    const elCarb = document.getElementById('aiCarbVal');
+                    const elFat = document.getElementById('aiFatVal');
+
+                    if (elCal)
+                        elCal.innerText = finalData.cal;
+                    if (elPro)
+                        elPro.innerText = finalData.pro;
+                    if (elCarb)
+                        elCarb.innerText = finalData.carb;
+                    if (elFat)
+                        elFat.innerText = finalData.fat;
+
+                    // 2. Điền tên món nếu input đang trống và AI trả về tên
+                    if (result.dishName && nameInput && !nameInput.value) {
+                        nameInput.value = result.dishName;
+                    }
+
+                    // 3. Hiển thị UI
+                    const elResultArea = document.getElementById('aiResultArea');
+                    const btnConfirm = document.getElementById('btnConfirm');
+
+                    if (elResultArea)
+                        elResultArea.classList.remove('hidden');
+                    btnAnalyze.classList.add('hidden');
+                    if (btnConfirm)
+                        btnConfirm.classList.remove('hidden');
+
+                    // 4. Tự động điền sang Tab Manual (để khi bấm Save sẽ lấy số liệu này)
+                    if (typeof fillManualForm === 'function') {
+                        fillManualForm(finalData);
+                    }
+
+                    ZaderToast.success("Phân tích bằng AI hoàn tất!");
+
+                } else {
+                    const errData = await res.json();
+                    ZaderToast.error(errData.error || "AI không thể phân tích hình ảnh này.");
+
+                    // Reset nút
+                    btnAnalyze.disabled = false;
+                    btnAnalyze.innerHTML = '<span class="material-symbols-outlined text-lg">auto_awesome</span> Phân Tích';
+                }
+
+            } catch (e) {
+                console.error(e);
+                ZaderToast.error("Lỗi kết nối. Máy chủ AI có đang chạy không?");
+
+                // Reset nút
+                btnAnalyze.disabled = false;
+                btnAnalyze.innerHTML = '<span class="material-symbols-outlined text-lg">auto_awesome</span> Phân Tích';
+            }
+        }
+
+        async function confirmReplace() {
+            // A. Lấy dữ liệu từ Form (AI đã điền vào các ô này rồi)
+            const name = document.getElementById('replaceName').value;
+            // Lấy từ tab Manual (vì tab AI cũng fill dữ liệu vào đây)
+            const cal = document.getElementById('manualCal').value || 0;
+            const pro = document.getElementById('manualProt').value || 0;
+            const carb = document.getElementById('manualCarb').value || 0;
+            const fat = document.getElementById('manualFat').value || 0;
+
+            // Lấy file ảnh (nếu có)
+            const file = document.getElementById('replaceImage').files[0];
+
+            if (!name) {
+                if (window.ZaderToast)
+                    ZaderToast.error("Tên món ăn là bắt buộc");
+                return;
+            }
+
+            // B. Chuẩn bị FormData để gửi
+            const formData = {
+                dishName: name,
+                calories: cal,
+                protein: pro,
+                carbs: carb,
+                fat: fat
+            };
+            if (file) {
+                formData.image = file;
+            }
+
+            // UI Loading
+            const btnConfirm = document.getElementById('btnConfirm');
+            const originalText = btnConfirm.innerHTML;
+            btnConfirm.disabled = true;
+            btnConfirm.innerHTML = 'Đang lưu...';
+
+            try {
+                let res;
+                // C. Gọi API
+                if (currentItemId) {
+                    // Update
+                    res = await fetchPost(`/api/meal-plan/item/${currentItemId}/update`, formData);
+                } else {
+                    // Add New (Nếu logic modal hỗ trợ thêm mới)
+                    const { dateStr } = getPageParams();
+                    formData.dateStr = dateStr;
+                    formData.type = currentMealType;
+                    res = await fetchPost('/api/meal-plan/item/add', formData);
+                }
+
+                if (res.ok) {
+                    if (window.ZaderToast)
+                        ZaderToast.success("Lưu thành công!");
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    const data = await res.json();
+                    if (window.ZaderToast)
+                        ZaderToast.error(data.error || "Lưu thất bại.");
+                    btnConfirm.disabled = false;
+                    btnConfirm.innerHTML = originalText;
+                }
+            } catch (e) {
+                console.error(e);
+                if (window.ZaderToast)
+                    ZaderToast.error("Lỗi kết nối.");
+                btnConfirm.disabled = false;
+                btnConfirm.innerHTML = originalText;
+            }
+        }
+
+        function useAiResult() {
+            const aiCal = document.getElementById('aiCalVal')?.innerText || 0;
+            const aiPro = document.getElementById('aiProtVal')?.innerText || 0;
+            const aiCarb = document.getElementById('aiCarbVal')?.innerText || 0;
+            const aiFat = document.getElementById('aiFatVal')?.innerText || 0;
+
+            document.getElementById('manualCal').value = aiCal;
+            document.getElementById('manualProt').value = aiPro;
+            document.getElementById('manualCarb').value = aiCarb;
+            document.getElementById('manualFat').value = aiFat;
+
+            // Chuyển sang tab manual để user review
+            switchTab('MANUAL');
+        }
+
+        // --- HÀM XỬ LÝ PREVIEW ẢNH ---
+        function previewFile() {
+            const preview = document.getElementById('previewImg');
+            const fileInput = document.getElementById('replaceImage');
+            const placeholder = document.getElementById('uploadPlaceholder');
+
+            // Kiểm tra xem input có file không
+            if (fileInput && fileInput.files && fileInput.files[0]) {
+                const file = fileInput.files[0];
+                const reader = new FileReader();
+
+                reader.onloadend = function () {
+                    if (preview) {
+                        preview.src = reader.result;
+                        preview.classList.remove('hidden');
+                    }
+                    if (placeholder) {
+                        placeholder.classList.add('opacity-0'); // Ẩn icon upload đi
+                    }
+                }
+                reader.readAsDataURL(file);
+            } else {
+                // Nếu user hủy chọn file thì reset lại
+                if (preview) {
+                    preview.src = "";
+                    preview.classList.add('hidden');
+                }
+                if (placeholder) {
+                    placeholder.classList.remove('opacity-0');
+                }
+            }
+        }
+
+        // --- 4. PAGINATION ---
+        let currentPage = 1;
+        const itemsPerPage = 200;
+
+        function initPagination() {
+            const rows = document.querySelectorAll('.shopping-item');
+            const totalItems = rows.length;
+            if (totalItems === 0)
+                return;
+
+            const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+            function updateDisplay() {
+                const start = (currentPage - 1) * itemsPerPage;
+                const end = start + itemsPerPage;
+
+                rows.forEach((row, index) => {
+                    if (index >= start && index < end)
+                        row.style.display = '';
+                    else
+                        row.style.display = 'none';
+                });
+
+                const pageInfo = document.getElementById('pageInfo');
+                if (pageInfo)
+                    pageInfo.innerText = `${start + 1}-${Math.min(end, totalItems)}`;
+
+                const btnPrev = document.getElementById('btnPrev');
+                const btnNext = document.getElementById('btnNext');
+
+                if (btnPrev)
+                    btnPrev.disabled = (currentPage === 1);
+                if (btnNext)
+                    btnNext.disabled = (currentPage === totalPages);
+            }
+
+            window.changePage = function (step) {
+                currentPage += step;
+                if (currentPage < 1)
+                    currentPage = 1;
+                if (currentPage > totalPages)
+                    currentPage = totalPages;
+                updateDisplay();
+            };
+
+            updateDisplay();
+        }
+
+
+        function printShoppingList() {
+            window.print();
+        }
+
+        // --- LOGIC QUICK ADD & SELECT MEAL ---
+        let pendingAddRecipeId = null; // Biến tạm lưu ID món đang chọn
+
+        function quickAddRecipe(recipeId) {
+            if (!recipeId)
+                return;
+            pendingAddRecipeId = recipeId; // Lưu lại ID để dùng sau
+
+            const { dateStr } = getPageParams();
+            const selectBox = document.getElementById('targetMealType');
+            selectBox.innerHTML = ''; // Xóa options cũ
+
+            // 1. Xác định thời gian để lọc bữa ăn
+            const now = new Date();
+            const currentHour = now.getHours();
+
+            // Parse ngày từ URL (YYYY-MM-DD)
+            const parts = dateStr.split('-');
+            // Lưu ý: Month trong JS bắt đầu từ 0
+            const planDate = new Date(parts[0], parts[1] - 1, parts[2]);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0); // Reset giờ về 0h sáng để so sánh ngày
+
+            // Danh sách các bữa ăn chuẩn
+            // label: Tên hiển thị, value: Giá trị gửi API, limitHour: Giờ giới hạn (nếu là hôm nay)
+            const mealOptions = [
+                { label: 'Breakfast', value: 'BREAKFAST', limitHour: 10 },
+                { label: 'Lunch', value: 'LUNCH', limitHour: 14 },
+                { label: 'Dinner', value: 'DINNER', limitHour: 21 },
+            ];
+
+            // 2. Logic lọc
+            let availableOptions = [];
+
+            // Kiểm tra: Có phải là "Hôm nay" không?
+            const isToday = planDate.getTime() === today.getTime();
+
+            if (isToday) {
+                // Nếu là hôm nay, chỉ hiện bữa chưa qua
+                availableOptions = mealOptions.filter(opt => currentHour < opt.limitHour);
+            } else {
+                // Nếu là ngày khác (Quá khứ hoặc Tương lai), hiện tất cả
+                availableOptions = mealOptions;
+            }
+
+            // 3. Render ra Select Box
+            if (availableOptions.length === 0) {
+                // Trường hợp hiếm: Quá 24h (không xảy ra thực tế vì Snack limit 24)
+                availableOptions.push({ label: 'Snack (Late Night)', value: 'SNACK' });
+            }
+
+            availableOptions.forEach(opt => {
+                const option = document.createElement('option');
+                option.value = opt.value;
+                option.text = opt.label;
+                selectBox.appendChild(option);
+            });
+
+            // 4. Mở Modal
+            document.getElementById('mealSelectModal').classList.remove('hidden');
+        }
+
+        function closeMealSelectModal() {
+            document.getElementById('mealSelectModal').classList.add('hidden');
+            pendingAddRecipeId = null;
+        }
+
+        // Hàm xác nhận thêm (Khi bấm nút Add trong Modal)
+        async function confirmAddToPlan() {
+            const { dateStr } = getPageParams();
+            const mealType = document.getElementById('targetMealType').value;
+
+            if (!pendingAddRecipeId || !mealType)
+                return;
+
+            // Đóng modal ngay cho mượt
+            closeMealSelectModal();
+            const loadingId = ZaderToast.loading(`Đang thêm vào ${mealType}...`);
+
+            try {
+                // Gọi API thêm món (đã có ở bước trước)
+                const res = await fetchPost('/api/meal-plan/add-recipe-to-plan', {
+                    dateStr: dateStr,
+                    recipeId: pendingAddRecipeId,
+                    mealType: mealType // Giá trị từ select box
+                });
+
+                if (res.ok) {
+                    ZaderToast.remove(loadingId);
+                    ZaderToast.success("Đã thêm thành công!");
+                    setTimeout(() => location.reload(), 800);
+                } else {
+                    const data = await res.json();
+                    ZaderToast.remove(loadingId);
+                    ZaderToast.error(data.error || "Thêm thất bại.");
+                }
+            } catch (e) {
+                console.error(e);
+                ZaderToast.remove(loadingId);
+                ZaderToast.error("Lỗi kết nối.");
+            }
+        }
+    </script>
+</body>
+
+</html>
+```

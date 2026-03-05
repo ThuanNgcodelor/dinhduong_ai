@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{fragments/head :: common-head}">
+    <title>Lịch Sử Bữa Ăn - Zader Food</title>
+</head>
+
+<body class="font-display bg-smart-white dark:bg-background-dark flex flex-col min-h-screen">
+
+    <th:block th:replace="~{fragments/navbar :: header_nav}"></th:block>
+
+    <main class="flex-grow container mx-auto px-4 py-8 max-w-7xl">
+
+        <div class="flex items-center justify-between mb-8">
+            <div>
+                <h1 class="text-3xl font-black text-dark-ink dark:text-white">Lịch Sử Kế Hoạch Bữa Ăn</h1>
+                <p class="text-gray-500">Theo dõi hành trình dinh dưỡng của bạn từng tuần.</p>
+            </div>
+            <a href="/meal-plan/generate"
+                class="flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary font-bold rounded-lg hover:bg-primary hover:text-white transition-all">
+                <span class="material-symbols-outlined">add</span> Kế Hoạch Mới
+            </a>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+
+            <div
+                class="lg:col-span-1 bg-white dark:bg-[#1a0e0a] rounded-xl shadow-soft border border-gray-100 dark:border-gray-800 p-4 md:p-6">
+
+                <div class="flex items-center justify-between mb-4">
+                    <a th:href="@{/meal-plan/history(month=${currentMonth == 1 ? 12 : currentMonth - 1}, year=${currentMonth == 1 ? currentYear - 1 : currentYear})}"
+                        class="flex size-8 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-white/10 transition-colors">
+                        <span class="material-symbols-outlined text-dark-ink dark:text-white">chevron_left</span>
+                    </a>
+
+                    <span class="text-lg font-bold text-dark-ink dark:text-white">
+                        <span th:text="'Tháng ' + ${currentMonth}">Tháng 12</span>
+                        <span th:text="${currentYear}">2025</span>
+                    </span>
+
+                    <a th:href="@{/meal-plan/history(month=${currentMonth == 12 ? 1 : currentMonth + 1}, year=${currentMonth == 12 ? currentYear + 1 : currentYear})}"
+                        class="flex size-8 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-white/10 transition-colors">
+                        <span class="material-symbols-outlined text-dark-ink dark:text-white">chevron_right</span>
+                    </a>
+                </div>
+
+                <div class="grid grid-cols-7 gap-1 mb-2 text-center">
+                    <span class="text-xs font-bold text-gray-400">CN</span>
+                    <span class="text-xs font-bold text-gray-400">T2</span>
+                    <span class="text-xs font-bold text-gray-400">T3</span>
+                    <span class="text-xs font-bold text-gray-400">T4</span>
+                    <span class="text-xs font-bold text-gray-400">T5</span>
+                    <span class="text-xs font-bold text-gray-400">T6</span>
+                    <span class="text-xs font-bold text-gray-400">T7</span>
+                </div>
+
+                <div class="grid grid-cols-7 gap-1">
+
+                    <th:block th:if="${startOffset > 0}">
+                        <div th:each="i : ${#numbers.sequence(1, startOffset)}" class="aspect-square"></div>
+                    </th:block>
+
+                    <th:block th:each="day : ${calendarDays}">
+                        <button
+                            class="aspect-square relative flex items-center justify-center rounded-full text-sm font-medium transition-all group"
+                            th:classappend="${day.isToday} ? 'bg-black text-white dark:bg-white dark:text-black font-bold' : 'text-dark-ink dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10'"
+                            th:data-url="@{/meal-plan/day/{date}(date=${day.fullDate})}"
+                            onclick="window.location.href = this.getAttribute('data-url')">
+
+                            <span th:text="${day.dayValue}">1</span>
+
+                            <div th:if="${day.hasPlan}" class="absolute bottom-1 w-1.5 h-1.5 rounded-full"
+                                th:classappend="${day.statusColor == 'GREEN'} ? 'bg-green-500' : 
+                                 (${day.statusColor == 'YELLOW'} ? 'bg-yellow-500' : 
+                                 (${day.statusColor == 'RED'} ? 'bg-red-500' : 'bg-gray-300'))">
+                            </div>
+                        </button>
+                    </th:block>
+                </div>
+
+                <div class="flex justify-center gap-4 mt-6 text-[10px] text-gray-400">
+                    <div class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-green-500"></span> An toàn
+                    </div>
+                    <div class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-yellow-500"></span> Chú ý
+                    </div>
+                    <div class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-red-500"></span> Vượt mức
+                    </div>
+                    <div class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-gray-300"></span> Tương
+                        lai</div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-2 space-y-6">
+                <div
+                    class="bg-white dark:bg-[#1a0e0a] rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden relative">
+                    <div class="p-6 relative z-10">
+                        <div class="flex justify-between items-start mb-6">
+                            <div>
+                                <h2 class="text-xl font-bold text-dark-ink dark:text-white flex items-center gap-2">
+                                    <span class="material-symbols-outlined text-orange-500">health_metrics</span>
+                                    Hồ Sơ Dinh Dưỡng Của Bạn
+                                </h2>
+                                <p class="text-sm text-gray-500 mt-1" th:if="${userProfile.goal != null}">
+                                    Mục Tiêu Hiện Tại: <span class="font-bold text-dark-ink dark:text-gray-300"
+                                        th:text="${userProfile.goal.name() == 'WEIGHT_LOSS' ? 'Giảm Cân' : (userProfile.goal.name() == 'MUSCLE_GAIN' ? 'Tăng Cơ' : 'Giữ Cân')}">Giảm
+                                        Cân</span>
+                                </p>
+                            </div>
+                            <a href="/user/settings"
+                                class="text-xs font-bold text-gray-400 hover:text-primary transition-colors flex items-center gap-1">
+                                Cập Nhật <span class="material-symbols-outlined text-sm">edit</span>
+                            </a>
+                        </div>
+
+                        <div th:if="${userProfile.targetWeightKg != null}"
+                            class="mb-6 p-4 rounded-lg bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-800 flex items-center gap-4">
+                            <div class="p-3 bg-white dark:bg-gray-800 rounded-full text-blue-500 shadow-sm">
+                                <span class="material-symbols-outlined">flag</span>
+                            </div>
+                            <div>
+                                <p class="text-xs font-bold text-blue-400 uppercase tracking-wider">Mục Tiêu Riêng</p>
+                                <p class="text-dark-ink dark:text-gray-200 font-medium">
+                                    Đạt <strong class="text-lg">[[${userProfile.targetWeightKg}]] kg</strong>
+                                    <span th:if="${userProfile.targetDate != null}">
+                                        vào <span
+                                            th:text="${#temporals.format(userProfile.targetDate, 'dd MMM yyyy')}">Date</span>
+                                    </span>
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-3 gap-4 text-center divide-x divide-gray-100 dark:divide-gray-700">
+                            <div class="px-2">
+                                <p class="text-[10px] font-bold text-gray-400 uppercase mb-1"
+                                    title="Basal Metabolic Rate">BMR</p>
+                                <p class="text-xl font-black text-gray-700 dark:text-gray-300">
+                                    [[${userProfile.bmr != null ? userProfile.bmr : '--'}]]
+                                </p>
+                                <span class="text-[10px] text-gray-400">kcal/day</span>
+                            </div>
+
+                            <div class="px-2">
+                                <p class="text-[10px] font-bold text-gray-400 uppercase mb-1"
+                                    title="Total Daily Energy Expenditure">TDEE</p>
+                                <p class="text-xl font-black text-blue-500">
+                                    [[${userProfile.tdee != null ? userProfile.tdee : '--'}]]
+                                </p>
+                                <span class="text-[10px] text-gray-400">kcal/day</span>
+                            </div>
+
+                            <div class="px-2">
+                                <p class="text-[10px] font-bold text-orange-500 uppercase mb-1">Mục Tiêu Mỗi Ngày</p>
+                                <p class="text-xl font-black text-orange-600">
+                                    [[${userProfile.calorieGoalPerDay != null ? userProfile.calorieGoalPerDay : '--'}]]
+                                </p>
+                                <span class="text-[10px] text-gray-400">kcal/ngày</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-start mb-6">
+                        <div>
+                            <h2 class="text-xl font-bold text-dark-ink dark:text-white flex items-center gap-2">
+                            </h2>
+                        </div>
+
+                        <div class="flex gap-2 pr-6">
+                            <button onclick="openWeightModal()"
+                                class="text-xs font-bold text-white bg-orange-500 hover:bg-orange-600 px-3 py-1.5 rounded-lg transition-colors shadow-sm flex items-center gap-1">
+                                <span class="material-symbols-outlined text-sm">monitor_weight</span> Cập Nhật Cân Nặng
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div
+                        class="bg-white dark:bg-[#1a0e0a] p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800">
+                        <p class="text-xs font-bold text-gray-400 uppercase mb-1">Đã Theo Dõi</p>
+                        <p class="text-2xl font-black text-dark-ink dark:text-white">
+                            [[${stats.totalTrackedDays}]] <span class="text-xs font-medium text-gray-400">ngày</span>
+                        </p>
+                    </div>
+
+                    <div
+                        class="bg-white dark:bg-[#1a0e0a] p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800">
+                        <p class="text-xs font-bold text-gray-400 uppercase mb-1">Chuỗi Hiện Tại</p>
+                        <p class="text-2xl font-black text-orange-500">
+                            [[${stats.currentStreak}]] <span class="text-xs font-medium text-gray-400">ngày 🔥</span>
+                        </p>
+                    </div>
+
+                    <div
+                        class="bg-white dark:bg-[#1a0e0a] p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800">
+                        <p class="text-xs font-bold text-gray-400 uppercase mb-1">Tỉ Lệ Đạt Mục Tiêu</p>
+                        <p class="text-2xl font-black"
+                            th:classappend="${stats.adherenceScore >= 80} ? 'text-green-500' : (${stats.adherenceScore >= 50} ? 'text-yellow-500' : 'text-red-500')">
+                            [[${stats.adherenceScore}]]%
+                        </p>
+                    </div>
+
+                    <div
+                        class="bg-white dark:bg-[#1a0e0a] p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800">
+                        <p class="text-xs font-bold text-gray-400 uppercase mb-1">Tiêu Thụ TB</p>
+                        <p class="text-2xl font-black text-blue-500">
+                            [[${#numbers.formatInteger(stats.avgDailyCalories, 0)}]] <span
+                                class="text-sm font-medium">kcal</span>
+                        </p>
+                    </div>
+                </div>
+
+                <div
+                    class="bg-white dark:bg-[#1a0e0a] p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-bold text-dark-ink dark:text-white">Xu Hướng Nạp Calo</h3>
+                        <div class="flex items-center gap-2 text-xs">
+                            <span class="flex items-center gap-1"><span
+                                    class="w-2 h-2 rounded-full bg-orange-500"></span> Nạp Vào</span>
+                            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-gray-400"></span>
+                                Mục Tiêu</span>
+                        </div>
+                    </div>
+                    <div class="h-64 w-full">
+                        <canvas id="caloriesChart"></canvas>
+                    </div>
+                </div>
+
+                <div
+                    class="bg-white dark:bg-[#1a0e0a] p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 mt-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-bold text-dark-ink dark:text-white flex items-center gap-2">
+                            <span class="material-symbols-outlined text-blue-500">monitor_weight</span>
+                            Biểu Đồ Theo Dõi Cân Nặng
+                        </h3>
+                        <div class="text-xs font-bold bg-blue-50 text-blue-600 px-3 py-1 rounded-full border border-blue-100"
+                            th:if="${userProfile.targetWeightKg != null}">
+                            Mục tiêu: [[${userProfile.targetWeightKg}]] kg
+                        </div>
+                    </div>
+                    <div class="h-64 w-full">
+                        <canvas id="weightChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                    <div
+                        class="bg-white dark:bg-[#1a0e0a] p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col items-center justify-center">
+                        <h3 class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4">Tỉ Lệ Dinh Dưỡng Trung
+                            Bình</h3>
+                        <div class="relative h-48 w-48">
+                            <canvas id="macroChart"></canvas>
+                            <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                                <span class="text-xs text-gray-400">Tỉ Lệ</span>
+                            </div>
+                        </div>
+                        <div class="flex gap-4 mt-4 text-xs font-bold text-gray-600 dark:text-gray-400">
+                            <span class="text-blue-500">Đạm: [[${stats.avgProtein}]]g</span>
+                            <span class="text-green-500">Tinh bột: [[${stats.avgCarbs}]]g</span>
+                            <span class="text-yellow-500">Béo: [[${stats.avgFat}]]g</span>
+                        </div>
+                    </div>
+
+                    <div
+                        class="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/10 dark:to-emerald-900/10 p-6 rounded-xl border border-green-100 dark:border-green-800/30">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3
+                                class="text-lg font-bold text-emerald-800 dark:text-emerald-400 flex items-center gap-2">
+                                Nhận Xét</h3>
+                            <span
+                                class="px-2 py-1 bg-white/50 dark:bg-black/20 rounded text-[10px] font-bold text-emerald-600 border border-emerald-200">
+                                [[${stats.overallStatus}]]
+                            </span>
+                        </div>
+
+                        <div class="space-y-3">
+                            <div th:if="${#lists.isEmpty(stats.insights)}" class="text-sm text-gray-500 italic">
+                                Chưa đủ dữ liệu để phân tích chi tiết. Liên tục cập nhật để xem thông tin!
+                            </div>
+
+                            <div th:each="insight : ${stats.insights}"
+                                class="flex gap-3 items-start bg-white dark:bg-black/20 p-3 rounded-lg border border-emerald-100/50">
+                                <span class="material-symbols-outlined text-emerald-500 text-lg mt-0.5">lightbulb</span>
+                                <p class="text-sm text-dark-ink dark:text-gray-200 leading-snug">[[${insight}]]</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <dialog id="weightModal"
+        class="p-0 rounded-xl shadow-2xl backdrop:bg-black/40 w-full max-w-sm open:animate-fade-in">
+        <div class="p-5 border-b flex justify-between items-center bg-gray-50 dark:bg-gray-800 dark:border-gray-700">
+            <h3 class="text-lg font-bold text-dark-ink dark:text-white flex items-center gap-2">
+                <span class="material-symbols-outlined text-orange-500">monitor_weight</span>
+                Cập Nhật Cân Nặng
+            </h3>
+            <button onclick="document.getElementById('weightModal').close()"
+                class="text-gray-400 hover:text-dark-ink transition">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+
+        <div class="p-6 bg-white dark:bg-[#1a0e0a]">
+            <p class="text-sm text-gray-500 mb-4">Nhập cân nặng hiện tại của bạn. Chúng tôi sẽ tự động tính toán lại nhu
+                cầu dinh dưỡng hàng ngày.</p>
+            <p id="todayDateDisplay" class="text-xs font-bold text-orange-600 mb-4 flex items-center gap-1">
+                <span class="material-symbols-outlined text-sm">today</span>
+                Đang tải ngày...
+            </p>
+
+            <label class="block mb-2 text-sm font-bold text-dark-ink dark:text-gray-300">Cân Nặng Mới (kg)</label>
+            <div class="relative">
+                <input type="number" id="newWeightInput" step="0.1"
+                    class="w-full rounded-lg border-gray-300 focus:ring-orange-500 focus:border-orange-500 pl-4 pr-12 h-12 text-lg font-bold"
+                    th:value="${userProfile.weightKg}" placeholder="0.0">
+                <span class="absolute right-4 top-3 text-gray-400 font-bold">kg</span>
+            </div>
+        </div>
+
+        <div class="p-5 border-t bg-gray-50 dark:bg-gray-800 dark:border-gray-700 flex justify-end gap-3">
+            <button onclick="document.getElementById('weightModal').close()"
+                class="px-4 py-2 text-gray-600 font-bold hover:bg-gray-200 rounded-lg transition text-sm">Hủy</button>
+            <button onclick="submitWeightUpdate()"
+                class="px-4 py-2 bg-orange-500 text-white font-bold hover:bg-orange-600 rounded-lg shadow-sm transition text-sm">
+                Lưu Thống Kê
+            </button>
+        </div>
+    </dialog>
+
+    <th:block th:replace="~{fragments/footer :: footer_section}"></th:block>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script th:inline="javascript">
+        document.addEventListener('DOMContentLoaded', function () {
+            const labels = /*[[${stats.chartLabels}]]*/[];
+            const dataCalories = /*[[${stats.chartDataCalories}]]*/[];
+            const dataGoal = /*[[${stats.chartDataGoal}]]*/[];
+            const avgPro = /*[[${stats.avgProtein}]]*/ 0;
+            const avgCarb = /*[[${stats.avgCarbs}]]*/ 0;
+            const avgFat = /*[[${stats.avgFat}]]*/ 0;
+
+            // 1. BIỂU ĐỒ CALO (Line Area Chart)
+            const ctxCal = document.getElementById('caloriesChart');
+            if (ctxCal) {
+                new Chart(ctxCal.getContext('2d'), {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: 'Calo Nạp Vào',
+                                data: dataCalories,
+                                borderColor: '#F97316', // Orange-500
+                                backgroundColor: (context) => {
+                                    const ctx = context.chart.ctx;
+                                    const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+                                    gradient.addColorStop(0, 'rgba(249, 115, 22, 0.2)');
+                                    gradient.addColorStop(1, 'rgba(249, 115, 22, 0)');
+                                    return gradient;
+                                },
+                                borderWidth: 2,
+                                pointBackgroundColor: '#fff',
+                                pointBorderColor: '#F97316',
+                                pointRadius: 4,
+                                pointHoverRadius: 6,
+                                fill: true,
+                                tension: 0.4
+                            },
+                            {
+                                label: 'Mục Tiêu',
+                                data: dataGoal,
+                                borderColor: '#9CA3AF', // Gray-400
+                                borderWidth: 2,
+                                borderDash: [5, 5],
+                                pointRadius: 0,
+                                fill: false
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'top', align: 'end', labels: { usePointStyle: true, boxWidth: 8 } },
+                            tooltip: { mode: 'index', intersect: false }
+                        },
+                        scales: {
+                            y: { beginAtZero: false, grid: { borderDash: [2, 4], color: '#f3f4f6' } },
+                            x: { grid: { display: false } }
+                        }
+                    }
+                });
+            }
+
+            // 2. BIỂU ĐỒ MACRO (Doughnut)
+            const ctxMacro = document.getElementById('macroChart');
+            if (ctxMacro) {
+                new Chart(ctxMacro.getContext('2d'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Protein', 'Carbs', 'Fat'],
+                        datasets: [{
+                            data: [avgPro, avgCarb, avgFat],
+                            backgroundColor: ['#3B82F6', '#22C55E', '#EAB308'], // Blue, Green, Yellow
+                            borderWidth: 0,
+                            hoverOffset: 10
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '75%',
+                        plugins: { legend: { display: false } }
+                    }
+                });
+            }
+
+            // [NEW] BIỂU ĐỒ CÂN NẶNG
+            const weightLabels = /*[[${weightLabels}]]*/[];
+            const weightData = /*[[${weightData}]]*/[];
+            const targetWeight = /*[[${userProfile.targetWeightKg}]]*/ null; // Lấy mục tiêu để vẽ đường kẻ ngang
+
+            const ctxWeight = document.getElementById('weightChart');
+            if (ctxWeight && weightData.length > 0) {
+
+                // Tạo dataset mục tiêu (đường thẳng ngang)
+                const goalDataset = targetWeight ? {
+                    label: 'Mục Tiêu',
+                    data: Array(weightLabels.length).fill(targetWeight),
+                    borderColor: '#22C55E', // Green
+                    borderWidth: 2,
+                    borderDash: [5, 5],
+                    pointRadius: 0,
+                    fill: false
+                } : null;
+
+                const datasets = [{
+                    label: 'Cân Nặng (kg)',
+                    data: weightData,
+                    borderColor: '#3B82F6', // Blue-500
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    borderWidth: 3,
+                    pointBackgroundColor: '#fff',
+                    pointBorderColor: '#3B82F6',
+                    pointRadius: 5,
+                    pointHoverRadius: 7,
+                    fill: true,
+                    tension: 0.3 // Đường cong mềm mại
+                }];
+
+                if (goalDataset)
+                    datasets.push(goalDataset);
+
+                new Chart(ctxWeight.getContext('2d'), {
+                    type: 'line',
+                    data: {
+                        labels: weightLabels,
+                        datasets: datasets
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'top', align: 'end' },
+                            tooltip: {
+                                mode: 'index',
+                                intersect: false,
+                                callbacks: {
+                                    label: function (context) {
+                                        return context.dataset.label + ': ' + context.parsed.y + ' kg';
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: false, // Không bắt đầu từ 0 để biểu đồ dao động rõ hơn
+                                grid: { borderDash: [2, 4], color: '#f3f4f6' },
+                                title: { display: true, text: 'kg' }
+                            },
+                            x: { grid: { display: false } }
+                        }
+                    }
+                });
+            } else if (ctxWeight) {
+                // Xử lý khi chưa có dữ liệu
+                ctxWeight.parentElement.innerHTML = '<div class="flex flex-col items-center justify-center h-full text-gray-400 text-sm"><span class="material-symbols-outlined text-3xl mb-2">bar_chart_off</span>Chưa có lịch sử thay đổi cân nặng. Vui lòng cập nhật cân nặng!</div>';
+            }
+        });
+    </script>
+    <script>
+        // Xử lý cập nhật cân nặng
+        function submitWeightUpdate() {
+            const weight = document.getElementById('newWeightInput').value;
+
+            if (!weight || weight <= 0) {
+                if (typeof ZaderToast !== 'undefined')
+                    ZaderToast.error("Vui lòng nhập cân nặng hợp lệ");
+                return;
+            }
+
+            const modal = document.getElementById('weightModal');
+            modal.close();
+
+            if (typeof ZaderToast !== 'undefined')
+                ZaderToast.loading("Đang lưu...");
+
+            fetch('/user/weight/update', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ weight: weight })
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        if (typeof ZaderToast !== 'undefined')
+                            ZaderToast.success(data.message);
+                        // Reload trang sau 1s để thấy chỉ số mới
+                        setTimeout(() => location.reload(), 1000);
+                    } else {
+                        if (typeof ZaderToast !== 'undefined')
+                            ZaderToast.error(data.message);
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    if (typeof ZaderToast !== 'undefined')
+                        ZaderToast.error("Lỗi kết nối");
+                });
+        }
+
+        function openWeightModal() {
+            const modal = document.getElementById('weightModal');
+            const dateDisplay = document.getElementById('todayDateDisplay');
+
+            // Lấy ngày hiện tại format đẹp (VD: Today, 15 Dec 2025)
+            const options = { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' };
+            const todayStr = new Date().toLocaleDateString('vi-VN', options);
+
+            dateDisplay.innerHTML = `<span class="material-symbols-outlined text-sm">today</span> Hôm nay, ${todayStr}`;
+
+            modal.showModal();
+        }
+    </script>
+</body>
+
+</html>

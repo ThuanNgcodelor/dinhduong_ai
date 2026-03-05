@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{fragments/head :: common-head}">
+    <title>Về Chúng Tôi - ZaderFood</title>
+</head>
+
+<body class="bg-smart-white dark:bg-background-dark font-display min-h-screen flex flex-col">
+
+    <div
+        class="fixed top-0 z-50 w-full bg-white/90 dark:bg-[#211511]/90 backdrop-blur-md shadow-sm border-b border-gray-100 dark:border-gray-800">
+        <div th:replace="~{fragments/navbar :: header_nav}"></div>
+    </div>
+
+    <main class="flex-grow pt-20">
+
+        <div class="relative bg-dark-ink py-20 sm:py-28">
+            <div class="absolute inset-0 overflow-hidden">
+                <img src="https://images.unsplash.com/photo-1490818387583-1baba5e638af?q=80&w=1932&auto=format&fit=crop"
+                    alt="Healthy Food Background" class="h-full w-full object-cover object-center opacity-20">
+            </div>
+            <div class="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
+                <h1 class="text-4xl font-black tracking-tight text-white sm:text-6xl mb-6">
+                    Định Nghĩa Lại <span class="text-primary">Chế Độ Ăn Lành Mạnh</span>
+                </h1>
+                <p class="mx-auto max-w-2xl text-lg text-gray-300">
+                    Ứng dụng công nghệ hiện đại để giải quyết các thách thức dinh dưỡng thực tế.
+                </p>
+            </div>
+        </div>
+
+        <section class="py-16 bg-white dark:bg-background-dark">
+            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                    <div>
+                        <div
+                            class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-100 text-orange-600 text-xs font-bold uppercase tracking-wider mb-4">
+                            Chúng Tôi Là Ai
+                        </div>
+                        <h2 class="text-3xl font-bold text-dark-ink dark:text-white mb-6">ZADER Technology Solutions
+                        </h2>
+                        <div class="prose prose-lg text-soft-grey dark:text-gray-400">
+                            <p class="mb-4">
+                                Có trụ sở tại <strong>Hà Nội, Việt Nam</strong>, ZADER Technology Solutions là công ty
+                                chuyên về lĩnh vực sức khỏe. Chúng tôi tận tâm cung cấp các giải pháp và dịch vụ hướng
+                                đến sức khỏe bằng cách áp dụng các công nghệ hiện đại vào việc quản lý sức khỏe thực tế.
+                            </p>
+                            <p>
+                                Hiện tại, chúng tôi đang tập trung mở rộng các nền tảng sức khỏe tích hợp AI, giải quyết
+                                nhu cầu cấp thiết về các hệ thống ăn uống thông minh trong lối sống hối hả ngày nay.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="relative h-64 sm:h-80 lg:h-full min-h-[300px] rounded-2xl overflow-hidden shadow-xl">
+                        <img src="https://images.unsplash.com/photo-1552664730-d307ca884978?q=80&w=2070&auto=format&fit=crop"
+                            alt="Team working" class="absolute inset-0 h-full w-full object-cover">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="py-16 bg-gray-50 dark:bg-[#1e1e1e]">
+            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                <div class="text-center max-w-3xl mx-auto mb-16">
+                    <h2 class="text-3xl font-bold text-dark-ink dark:text-white mb-4">Thách Thức</h2>
+                    <p class="text-soft-grey dark:text-gray-400">
+                        Trong thế giới bận rộn ngày nay, nhiều người dùng gặp khó khăn trong việc lên thực đơn cân bằng
+                        dinh dưỡng, theo dõi lượng calo hoặc quyết định nấu món gì với nguyên liệu có sẵn. Điều này
+                        thường dẫn đến thói quen ăn uống lặp đi lặp lại, lãng phí thức ăn và kiểm soát dinh dưỡng kém.
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div
+                        class="bg-white dark:bg-background-dark p-8 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:-translate-y-1 transition-transform">
+                        <div
+                            class="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center mb-6">
+                            <span class="material-symbols-outlined">psychology</span>
+                        </div>
+                        <h3 class="text-xl font-bold text-dark-ink dark:text-white mb-3">Tích Hợp AI</h3>
+                        <p class="text-sm text-soft-grey">Được hỗ trợ bởi các mô hình <strong>Ollama AI</strong> để phân
+                            tích ngôn ngữ tự nhiên và ước tính tự động hàm lượng calo cho các món ăn tùy chỉnh.</p>
+                    </div>
+
+                    <div
+                        class="bg-white dark:bg-background-dark p-8 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:-translate-y-1 transition-transform">
+                        <div
+                            class="w-12 h-12 bg-green-50 text-green-600 rounded-xl flex items-center justify-center mb-6">
+                            <span class="material-symbols-outlined">calendar_month</span>
+                        </div>
+                        <h3 class="text-xl font-bold text-dark-ink dark:text-white mb-3">Lên Kế Hoạch Thông Minh</h3>
+                        <p class="text-sm text-soft-grey">Tính toán các kế hoạch dinh dưỡng cá nhân hóa dựa trên mục
+                            tiêu calo, sở thích chế độ ăn uống và các dị ứng thực phẩm của cá nhân.</p>
+                    </div>
+
+                    <div
+                        class="bg-white dark:bg-background-dark p-8 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:-translate-y-1 transition-transform">
+                        <div
+                            class="w-12 h-12 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center mb-6">
+                            <span class="material-symbols-outlined">database</span>
+                        </div>
+                        <h3 class="text-xl font-bold text-dark-ink dark:text-white mb-3">Công Nghệ Đột Phá</h3>
+                        <p class="text-sm text-soft-grey">Được xây dựng trên nền tảng vững chắc của <strong>Java Spring
+                                Boot</strong> và <strong>SQL Server</strong>, đảm bảo bảo mật, tính mở rộng và hiệu suất
+                            cao.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer th:replace="~{fragments/footer :: footer_section}"></footer>
+</body>
+
+</html>

@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{fragments/head :: common-head}">
+    <title>Tạo Kế Hoạch Hàng Tuần</title>
+</head>
+
+<body class="font-display bg-[#f8f6f5] dark:bg-[#23140f] flex flex-col min-h-screen">
+
+    <th:block th:replace="~{fragments/toast :: toast-system}"></th:block>
+    <th:block th:replace="~{fragments/navbar :: header_nav}"></th:block>
+
+    <main class="px-4 sm:px-10 lg:px-20 xl:px-40 flex flex-1 justify-center py-10">
+        <div class="flex flex-col w-full max-w-5xl flex-1 gap-8">
+            <div class="flex flex-col gap-4">
+                <div class="flex min-w-72 flex-col gap-3">
+                    <h1 class="text-[#181210] dark:text-white text-4xl font-black leading-tight tracking-[-0.033em]">
+                        Tạo Kế Hoạch Bữa Ăn Hàng Tuần Của Bạn
+                    </h1>
+                    <p class="text-[#8d6a5e] dark:text-white/60 text-base font-normal leading-normal">
+                        Sẵn sàng nấu nướng? Chúng tôi sẽ tạo một kế hoạch dựa trên cài đặt hồ sơ cá nhân của bạn.
+                    </p>
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-[#1a0e0a] rounded-xl shadow-sm p-6 md:p-8 relative overflow-hidden">
+                <div class="absolute top-0 right-0 p-8 opacity-5 dark:opacity-10 pointer-events-none">
+                    <span class="material-symbols-outlined text-9xl">assignment_ind</span>
+                </div>
+
+                <div class="flex flex-col md:flex-row justify-between items-start mb-8 gap-4 relative z-10">
+                    <div>
+                        <h2 class="text-xl font-bold text-dark-ink dark:text-white flex items-center gap-2">
+                            <span class="material-symbols-outlined text-primary">person_check</span>
+                            Hồ Sơ Dinh Dưỡng Của Bạn
+                        </h2>
+                        <p class="text-sm text-soft-grey mt-1">
+                            AI sẽ sử dụng các cài đặt này để tính toán bữa ăn của bạn.
+                        </p>
+                    </div>
+                    <a href="/user/settings"
+                        class="flex items-center gap-2 text-sm font-bold text-primary hover:text-white bg-orange-50 hover:bg-primary border border-orange-100 hover:border-primary px-4 py-2 rounded-lg transition-all shadow-sm">
+                        <span class="material-symbols-outlined text-lg">settings</span>
+                        Cập Nhật Cài Đặt
+                    </a>
+                </div>
+
+                <div th:if="${targetDateStr != null}"
+                    class="mb-6 p-4 rounded-xl bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-800 flex flex-col sm:flex-row items-start sm:items-center gap-4 relative z-10">
+                    <div class="p-3 bg-white dark:bg-gray-800 rounded-full text-blue-600 shadow-sm">
+                        <span class="material-symbols-outlined">flag</span>
+                    </div>
+                    <div class="flex-1">
+                        <h4 class="font-bold text-dark-ink dark:text-white text-sm uppercase tracking-wide">Mục Tiêu Cụ
+                            Thể Đang Bật</h4>
+                        <p class="text-sm text-gray-600 dark:text-gray-300 mt-1">
+                            Đạt <strong>[[${userProfile.targetWeightKg}]] kg</strong> vào
+                            <strong>[[${targetDateStr}]]</strong>.
+                            <span
+                                class="inline-block px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs font-bold ml-2">
+                                [[${daysLeft}]] ngày còn lại
+                            </span>
+                        </p>
+                    </div>
+                    <div class="text-right hidden sm:block">
+                        <span class="block text-xs text-gray-400 font-bold uppercase">Thay Đổi Cân Nặng</span>
+                        <span class="text-xl font-black"
+                            th:classappend="${weightDiff.doubleValue() < 0 ? 'text-green-600' : 'text-orange-500'}"
+                            th:text="${(weightDiff.doubleValue() > 0 ? '+' : '') + weightDiff + ' kg'}">
+                            -5.0 kg
+                        </span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8 relative z-10">
+                    <div class="p-4 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700">
+                        <p class="text-xs font-bold text-gray-400 uppercase mb-1 flex items-center gap-1">
+                            <span class="material-symbols-outlined text-sm">flag</span> Mục Tiêu
+                        </p>
+                        <p class="text-lg font-black text-dark-ink dark:text-white truncate"
+                            th:text="${userProfile.goal != null ? (userProfile.goal.name() == 'WEIGHT_LOSS' ? 'Giảm Cân' : (userProfile.goal.name() == 'MUSCLE_GAIN' ? 'Tăng Cơ' : 'Giữ Cân')) : 'Chưa thiết lập'}">
+                            Giảm Cân
+                        </p>
+                    </div>
+
+                    <div class="p-4 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700">
+                        <p class="text-xs font-bold text-gray-400 uppercase mb-1 flex items-center gap-1">
+                            <span class="material-symbols-outlined text-sm">restaurant_menu</span> Chế Độ Ăn
+                        </p>
+                        <p class="text-lg font-black text-dark-ink dark:text-white truncate"
+                            th:title="${#lists.isEmpty(userProfile.dietaryPreferences) ? 'Tiêu Chuẩn' : #strings.listJoin(userProfile.dietaryPreferences, ', ')}"
+                            th:text="${#lists.isEmpty(userProfile.dietaryPreferences) ? 'Tiêu Chuẩn' : #strings.listJoin(userProfile.dietaryPreferences, ', ')}">
+                            Cân Bằng
+                        </p>
+                    </div>
+
+                    <div class="p-4 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700">
+                        <p class="text-xs font-bold text-gray-400 uppercase mb-1 flex items-center gap-1">
+                            <span class="material-symbols-outlined text-sm">directions_run</span> Hoạt Động
+                        </p>
+                        <p class="text-lg font-black text-dark-ink dark:text-white truncate"
+                            th:text="${userProfile.activityLevel != null ? (userProfile.activityLevel.name() == 'SEDENTARY' ? 'Ít Vận Động' : (userProfile.activityLevel.name() == 'LIGHT' ? 'Vận Động Nhẹ' : (userProfile.activityLevel.name() == 'MODERATE' ? 'Trung Bình' : (userProfile.activityLevel.name() == 'ACTIVE' ? 'Năng Động' : 'Rất Năng Động')))) : 'Chưa thiết lập'}">
+                            Trung Bình
+                        </p>
+                    </div>
+
+                    <div
+                        class="p-4 rounded-xl bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-900/10 border border-orange-200 dark:border-orange-800">
+                        <p class="text-xs font-bold text-orange-600 uppercase mb-1 flex items-center gap-1">
+                            <span class="material-symbols-outlined text-sm">local_fire_department</span> Mục Tiêu Mỗi
+                            Ngày
+                        </p>
+                        <p class="text-2xl font-black text-orange-600">
+                            [[${userProfile.calorieGoalPerDay}]] <span class="text-sm font-medium">kcal</span>
+                        </p>
+                    </div>
+                </div>
+
+                <div
+                    class="flex flex-wrap gap-6 text-sm text-gray-500 border-t border-dashed border-gray-200 dark:border-gray-700 pt-4 mb-8 relative z-10">
+                    <div class="flex items-center gap-2" title="Tỷ lệ trao đổi chất cơ bản">
+                        <span class="material-symbols-outlined text-purple-500">vital_signs</span>
+                        <span>BMR: <strong class="text-dark-ink dark:text-white">[[${userProfile.bmr}]]</strong></span>
+                    </div>
+                    <div class="flex items-center gap-2" title="Tổng năng lượng tiêu hao hằng ngày">
+                        <span class="material-symbols-outlined text-blue-500">bolt</span>
+                        <span>TDEE: <strong
+                                class="text-dark-ink dark:text-white">[[${userProfile.tdee}]]</strong></span>
+                    </div>
+                </div>
+
+                <form id="generateForm" onsubmit="handleGenerate(event)">
+                    <input type="hidden" name="calories" th:value="${userProfile.calorieGoalPerDay}">
+                    <input type="hidden" name="dietType"
+                        th:value="${#strings.listJoin(userProfile.dietaryPreferences, ', ')}">
+                    <input type="hidden" name="goal" th:value="${userProfile.goal}">
+
+                    <div class="flex flex-col gap-6">
+                        <label class="flex flex-col w-full">
+                            <p class="text-[#181210] dark:text-white text-base font-bold pb-2">Chọn Ngày Bắt Đầu</p>
+                            <input type="date" id="startDateInput" name="startDateStr"
+                                class="form-input-field w-full md:w-1/2 rounded-lg border-[#e7ddda] dark:bg-[#23140f] h-14 px-4 text-[#181210] dark:text-white focus:ring-primary focus:border-primary shadow-sm font-medium">
+                        </label>
+
+                        <div id="ai-loading-alert"
+                            class="hidden p-4 text-sm text-blue-800 border border-blue-200 rounded-lg bg-blue-50 dark:bg-gray-800 dark:text-blue-400 dark:border-blue-900"
+                            role="alert">
+                            <div class="flex items-center gap-3">
+                                <span class="material-symbols-outlined text-xl animate-spin">hourglass_top</span>
+                                <div>
+                                    <span class="font-bold">Đầu Bếp AI đang nấu...</span>
+                                    <p class="mt-1">Vui lòng đợi trong khi chúng tôi thiết kế thực đơn dành riêng cho
+                                        bạn. Quá trình này mất khoảng <span class="font-bold">1-2 phút</span>.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col sm:flex-row gap-4 mt-2">
+                            <button type="submit" id="btnGenerate"
+                                class="flex-1 flex items-center justify-center rounded-lg h-14 px-8 bg-[#ff7142] text-white text-lg font-bold hover:bg-[#e6663b] transition-all shadow-lg shadow-orange-200 dark:shadow-none hover:shadow-xl hover:-translate-y-0.5 disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none">
+                                <span class="material-symbols-outlined mr-2" id="iconGenerate">auto_awesome</span>
+                                <span id="textGenerate">Tạo Kế Hoạch Hàng Tuần</span>
+                                <svg id="spinnerGenerate" class="animate-spin ml-2 h-5 w-5 text-white hidden"
+                                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                        stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor"
+                                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                    </path>
+                                </svg>
+                            </button>
+
+                            <button type="button" onclick="submitManual()" id="btnArrange"
+                                class="flex-1 sm:flex-none flex items-center justify-center rounded-lg h-14 px-8 bg-white dark:bg-gray-800 text-[#181210] dark:text-white text-base font-bold hover:bg-gray-50 hover:text-primary transition-colors border border-gray-200 dark:border-gray-700 shadow-sm">
+                                <span class="material-symbols-outlined mr-2">drag_indicator</span>
+                                Sắp Xếp Thủ Công
+                            </button>
+
+                            <button type="button" id="btnCancel" onclick="cancelGeneration()"
+                                class="hidden flex-1 sm:flex-none flex items-center justify-center rounded-lg h-14 px-8 bg-red-50 text-red-600 text-base font-bold hover:bg-red-100 transition-colors border border-red-200">
+                                Hủy
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div class="flex flex-col gap-6">
+                <div class="flex justify-between items-end">
+                    <div>
+                        <h2 class="text-2xl font-black text-dark-ink dark:text-white">Lịch Sử Bữa Ăn</h2>
+                        <p class="text-sm text-gray-500">Tổng quan về lượng dinh dưỡng tiêu thụ hàng ngày của bạn.</p>
+                    </div>
+                </div>
+
+                <div
+                    class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 max-h-[800px] overflow-y-auto custom-scroll pr-2">
+                    <a th:each="plan : ${recentPlans}" th:href="@{/meal-plan/history/{date}(date=${plan.planDate})}"
+                        class="block group relative bg-white dark:bg-[#1a0e0a] rounded-xl p-5 border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-md hover:border-orange-200 transition-all">
+
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="flex items-center gap-3">
+                                <div
+                                    class="flex flex-col items-center justify-center w-12 h-12 bg-orange-50 dark:bg-orange-900/20 text-orange-600 rounded-lg font-bold border border-orange-100 dark:border-orange-800">
+                                    <span class="text-xs uppercase"
+                                        th:text="'T' + ${#temporals.format(plan.planDate, 'MM')}">T12</span>
+                                    <span class="text-lg leading-none"
+                                        th:text="${#temporals.format(plan.planDate, 'dd')}">12</span>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-dark-ink dark:text-gray-200"
+                                        th:text="${#temporals.format(plan.planDate, 'EEEE', new java.util.Locale('vi', 'VN'))}">
+                                        Thứ Hai</h4>
+                                    <p class="text-xs text-gray-400"
+                                        th:text="${plan.isGeneratedByAI ? 'AI Tạo' : 'Thủ Công'}">Loại</p>
+                                </div>
+                            </div>
+
+                            <span
+                                class="material-symbols-outlined text-gray-300 group-hover:text-orange-500 transition-colors">chevron_right</span>
+                        </div>
+
+                        <div class="mb-4">
+                            <div class="flex justify-between text-xs mb-1"
+                                th:with="safeCal=${plan.totalCalories != null ? plan.totalCalories.doubleValue() : 0.0}">
+
+                                <span class="text-gray-500">Calo</span>
+                                <span class="font-bold text-dark-ink dark:text-gray-300">
+                                    <span th:text="${safeCal.intValue()}">1500</span> kcal
+                                </span>
+                            </div>
+
+                            <div class="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
+                                <div class="h-2 rounded-full transition-all duration-500" th:with="safeCal=${plan.totalCalories != null ? plan.totalCalories.doubleValue() : 0.0},
+                                     safeGoal=${userGoal != null ? userGoal : 2000.0},
+                                     pct=${safeGoal > 0 ? (safeCal * 100.0) / safeGoal : 0}"
+                                    th:style="'width: ' + ${pct > 100 ? 100 : pct} + '%'"
+                                    th:classappend="${safeCal == 0 ? 'bg-gray-300' : (safeCal >= (safeGoal * 0.9) && safeCal <= (safeGoal * 1.1) ? 'bg-green-500' : (safeCal > (safeGoal * 1.1) ? 'bg-red-500' : 'bg-yellow-500'))}">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-2 border-t border-gray-50 dark:border-gray-800 pt-3">
+                            <div
+                                class="flex-1 flex flex-col items-center bg-blue-50 dark:bg-blue-900/10 py-1 rounded text-[10px] text-blue-600">
+                                <span class="font-bold">Đạm</span>
+                                <span
+                                    th:text="${plan.totalProtein != null ? plan.totalProtein.intValue() : 0} + 'g'">0g</span>
+                            </div>
+                            <div
+                                class="flex-1 flex flex-col items-center bg-green-50 dark:bg-green-900/10 py-1 rounded text-[10px] text-green-600">
+                                <span class="font-bold">Tinh bột</span>
+                                <span
+                                    th:text="${plan.totalCarbs != null ? plan.totalCarbs.intValue() : 0} + 'g'">0g</span>
+                            </div>
+                            <div
+                                class="flex-1 flex flex-col items-center bg-yellow-50 dark:bg-yellow-900/10 py-1 rounded text-[10px] text-yellow-600">
+                                <span class="font-bold">Béo</span>
+                                <span th:text="${plan.totalFat != null ? plan.totalFat.intValue() : 0} + 'g'">0g</span>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+
+                <div th:if="${#lists.isEmpty(recentPlans)}"
+                    class="text-center py-10 bg-white rounded-xl border border-dashed border-gray-300">
+                    <div class="text-gray-300 mb-2">
+                        <span class="material-symbols-outlined text-4xl">calendar_today</span>
+                    </div>
+                    <p class="text-gray-500">Chưa có lịch sử kế hoạch bữa ăn nào.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div th:if="${isProfileMissing}" id="profileBlockingModal"
+        class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900/90 backdrop-blur-sm p-4 transition-all duration-300">
+
+        <div
+            class="bg-white dark:bg-[#1e1e1e] rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transform scale-100 transition-all border border-gray-100 dark:border-gray-700">
+
+            <div class="bg-orange-50 dark:bg-orange-900/20 p-8 flex justify-center items-center">
+                <div class="relative">
+                    <span class="absolute inset-0 bg-orange-400 rounded-full opacity-20 animate-ping"></span>
+                    <div class="relative bg-white dark:bg-gray-800 p-4 rounded-full shadow-sm text-primary">
+                        <span class="material-symbols-outlined !text-5xl">health_metrics</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-8 text-center">
+                <h2 class="text-2xl font-black text-dark-ink dark:text-white mb-3">Yêu Cầu Cài Đặt</h2>
+                <p class="text-gray-500 dark:text-gray-400 mb-6 leading-relaxed">
+                    Để tạo một kế hoạch bữa ăn được cá nhân hóa, ZaderFood cần các chỉ số cơ thể của bạn (<strong>BMR,
+                        TDEE</strong>) và <strong>Mục Tiêu Calo</strong>.
+                </p>
+
+                <p
+                    class="text-xs text-orange-600 bg-orange-50 dark:bg-orange-900/10 py-2 px-3 rounded-lg mb-8 font-bold border border-orange-100 dark:border-orange-800/30">
+                    ⚠ Vui lòng cập nhật cài đặt để tiếp tục sử dụng ứng dụng.
+                </p>
+
+                <a th:href="@{/user/settings}"
+                    class="block w-full py-4 bg-primary hover:bg-orange-600 text-white font-bold rounded-xl shadow-lg shadow-orange-500/30 transition-all transform hover:-translate-y-1">
+                    Cập Nhật Hồ Sơ Ngay
+                </a>
+
+                <a th:href="@{/}" class="block w-full py-4 bg-white text-black font-bold rounded-xl mt-3">
+                    Trở về trang chủ
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <th:block th:replace="~{fragments/footer :: footer_section}"></th:block>
+
+    <script th:inline="javascript">
+        document.addEventListener("DOMContentLoaded", function () {
+            // Kiểm tra xem modal có tồn tại không (tức là isProfileMissing = true)
+            const modal = document.getElementById('profileBlockingModal');
+            if (modal) {
+                // Khóa cuộn của body
+                document.body.style.overflow = 'hidden';
+                document.body.style.height = '100vh';
+            }
+        });
+    </script>
+
+    <script th:inline="javascript">
+        let abortController = null;
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const dateInput = document.getElementById('startDateInput');
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            dateInput.value = tomorrow.toISOString().split('T')[0];
+        });
+
+        async function handleGenerate(event) {
+            event.preventDefault();
+            const form = document.getElementById('generateForm');
+            const formData = new FormData(form);
+
+            toggleLoadingState(true);
+            abortController = new AbortController();
+
+            try {
+                const response = await fetch('/meal-plan/generate', {
+                    method: 'POST',
+                    body: formData,
+                    signal: abortController.signal
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.status === 'success') {
+                    ZaderToast.success(data.message);
+                    setTimeout(() => window.location.href = data.redirectUrl, 500);
+                } else {
+                    console.error("Server Error:", data);
+                    ZaderToast.error(data.message || "Tạo kế hoạch thất bại");
+                    toggleLoadingState(false);
+                }
+            } catch (error) {
+                if (error.name === 'AbortError') {
+                    ZaderToast.show('Đã Hủy', 'info');
+                } else {
+                    console.error(error);
+                    ZaderToast.error('Kết nối thất bại. AI có đang chạy không?');
+                }
+                toggleLoadingState(false);
+            }
+        }
+
+        function cancelGeneration() {
+            if (abortController) {
+                abortController.abort();
+                abortController = null;
+            }
+            toggleLoadingState(false);
+        }
+
+        function toggleLoadingState(isLoading) {
+            const btnGenerate = document.getElementById('btnGenerate');
+            const iconGenerate = document.getElementById('iconGenerate');
+            const textGenerate = document.getElementById('textGenerate');
+            const spinner = document.getElementById('spinnerGenerate');
+            const btnArrange = document.getElementById('btnArrange');
+            const btnCancel = document.getElementById('btnCancel');
+            const alertBox = document.getElementById('ai-loading-alert');
+            const startDateInput = document.getElementById('startDateInput');
+
+            if (isLoading) {
+                startDateInput.disabled = true;
+                btnGenerate.disabled = true;
+                btnGenerate.classList.add('cursor-not-allowed', 'opacity-80');
+                iconGenerate.classList.add('hidden');
+                textGenerate.innerText = 'Đang Nấu...';
+                spinner.classList.remove('hidden');
+
+                btnArrange.classList.add('hidden');
+                btnCancel.classList.remove('hidden');
+                alertBox.classList.remove('hidden');
+                alertBox.classList.add('flex');
+            } else {
+                startDateInput.disabled = false;
+                btnGenerate.disabled = false;
+                btnGenerate.classList.remove('cursor-not-allowed', 'opacity-80');
+                iconGenerate.classList.remove('hidden');
+                textGenerate.innerText = 'Tạo Kế Hoạch Hàng Tuần';
+                spinner.classList.add('hidden');
+
+                btnArrange.classList.remove('hidden');
+                btnCancel.classList.add('hidden');
+                alertBox.classList.add('hidden');
+                alertBox.classList.remove('flex');
+            }
+        }
+
+        function submitManual() {
+            const dateInput = document.getElementById('startDateInput');
+            // Lấy giá trị từ các input ẩn
+            const calInput = document.querySelector('input[name="calories"]');
+            const dietInput = document.querySelector('input[name="dietType"]');
+            const goalInput = document.querySelector('input[name="goal"]');
+
+            const params = new URLSearchParams({
+                startDateStr: dateInput.value || '',
+                calories: calInput.value || '2000',
+                dietType: dietInput.value || '', // Diet giờ là chuỗi (Keto, Vegan)
+                goal: goalInput.value || 'MAINTENANCE'
+            });
+
+            console.log("Manual Params:", params.toString());
+            window.location.href = `/meal-plan/manual?${params.toString()}`;
+        }
+    </script>
+</body>
+
+</html>

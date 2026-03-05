@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<div th:replace="~{fragments/head :: common-head}"></div>
+
+<head>
+    <title>Yêu Cầu Nguyên Liệu Mới - Zader Food</title>
+</head>
+
+<body class="bg-[#FAFAFA] text-[#263238]">
+    <div th:replace="~{fragments/navbar :: header_nav}"></div>
+    <div class="min-h-screen flex items-center justify-center p-4">
+        <div class="max-w-md w-full bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100">
+            <div class="bg-[#4CAF50] p-6 text-center">
+                <h2 class="text-2xl font-bold text-white">Yêu Cầu Nguyên Liệu</h2>
+                <p class="text-green-100 text-sm mt-1">Giúp chúng tôi cải thiện cơ sở dữ liệu</p>
+            </div>
+
+            <form th:action="@{/recipes/request-ingredient}" method="POST" th:object="${newIngredient}"
+                enctype="multipart/form-data" class="p-8 space-y-6">
+
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">Tên Nguyên Liệu <span
+                            class="text-red-500">*</span></label>
+                    <input type="text" th:field="*{newName}" required
+                        class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#4CAF50] focus:border-[#4CAF50] outline-none transition"
+                        placeholder="VD: Quả thanh long">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">Danh Mục <span
+                            class="text-red-500">*</span></label>
+                    <select th:field="*{categoryId}" required
+                        class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#4CAF50] focus:border-[#4CAF50] outline-none bg-white">
+                        <option value="" disabled selected>Chọn một danh mục</option>
+                        <option th:each="cat : ${categories}" th:value="${cat.categoryId}" th:text="${cat.name}">
+                        </option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">Calo (kcal/100g)</label>
+                    <input type="number" step="0.1" th:field="*{caloriesPer100g}"
+                        class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#4CAF50] focus:border-[#4CAF50] outline-none"
+                        placeholder="Tuỳ chọn">
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">Đơn Vị Cơ Bản <span
+                                class="text-red-500">*</span></label>
+                        <input type="text" th:field="*{baseUnit}" required
+                            class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#4CAF50] focus:border-[#4CAF50] outline-none"
+                            placeholder="VD: g, ml, cái">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">Đạm (g)</label>
+                        <input type="number" step="0.1" th:field="*{protein}"
+                            class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#4CAF50] focus:border-[#4CAF50] outline-none"
+                            placeholder="0.0">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">Tinh bột (g)</label>
+                        <input type="number" step="0.1" th:field="*{carbs}"
+                            class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#4CAF50] focus:border-[#4CAF50] outline-none"
+                            placeholder="0.0">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">Chất béo (g)</label>
+                        <input type="number" step="0.1" th:field="*{fat}"
+                            class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#4CAF50] focus:border-[#4CAF50] outline-none"
+                            placeholder="0.0">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">Ảnh Tham Khảo</label>
+                    <input type="file" name="newIngredientImage" accept="image/*"
+                        class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100 cursor-pointer">
+                </div>
+
+                <div class="flex gap-4 pt-4">
+                    <a th:href="@{/recipes/search}"
+                        class="w-1/2 py-3 px-4 text-center rounded-lg border border-gray-300 text-gray-700 font-bold hover:bg-gray-50 transition">
+                        Hủy
+                    </a>
+                    <button type="submit"
+                        class="w-1/2 py-3 px-4 rounded-lg bg-[#4CAF50] text-white font-bold hover:bg-[#43A047] shadow-md hover:shadow-lg transition transform active:scale-95">
+                        Gửi Yêu Cầu
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</body>
+
+</html>

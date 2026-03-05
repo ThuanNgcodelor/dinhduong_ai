@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{fragments/head :: common-head}"></head>
+
+<body class="font-display bg-smart-white">
+    <div class="relative flex h-auto min-h-screen w-full flex-col overflow-x-hidden">
+
+        <header th:replace="~{fragments/navbar :: header_nav}"></header>
+
+        <main class="px-4 md:px-10 lg:px-20 xl:px-40 flex flex-1 justify-center py-5 md:py-10">
+            <div class="layout-content-container flex flex-col w-full max-w-[1200px] flex-1">
+
+                <div
+                    class="flex flex-col items-center justify-center text-center p-8 mb-6 bg-white rounded-xl shadow-sm border border-gray-100">
+                    <div class="bg-blue-100 text-blue-600 p-3 rounded-full mb-4">
+                        <span class="material-symbols-outlined text-3xl">folder_shared</span>
+                    </div>
+                    <h1 class="text-3xl font-black text-dark-ink mb-2" th:text="${collection.name}">Collection Name</h1>
+
+                    <p class="text-soft-grey">Bộ Sưu Tập Được Chia Sẻ • <span th:text="${#lists.size(items)}">0</span>
+                        món</p>
+
+                    <p class="text-xs text-soft-grey mt-1">Tạo ngày <span
+                            th:text="${#temporals.format(collection.createdAt, 'dd MMM yyyy')}">Date</span></p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+                    <div th:each="item : ${items}"
+                        class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow flex flex-col h-full">
+
+                        <div class="h-48 w-full bg-cover bg-center relative"
+                            th:style="|background-image: url('${item.imageUrl != null ? item.imageUrl : '/images/default-food.jpg'}')|">
+
+                            <div th:if="${item.isAi}"
+                                class="absolute top-2 right-2 bg-purple-600 text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm flex items-center gap-1">
+                                <span class="material-symbols-outlined text-[12px]">smart_toy</span> Đầu Bếp AI
+                            </div>
+                        </div>
+
+                        <div class="p-4 flex flex-col flex-grow">
+                            <h3 class="font-bold text-lg text-dark-ink mb-1 truncate" th:text="${item.name}">Name</h3>
+
+                            <div class="mt-auto text-xs text-gray-500 flex flex-wrap gap-2 items-center mb-4">
+                                <span class="font-bold text-gray-700" th:text="|${item.calories} Kcal|"></span>
+                                <span>•</span>
+                                <span th:text="|${item.timeMin} Phút|"></span>
+                                <span>•</span>
+                                <span th:text="${item.difficulty}"
+                                    th:class="${item.isAi} ? 'text-purple-600 font-medium' : 'text-green-600'"></span>
+                            </div>
+
+                            <a th:href="${item.isAi} 
+                                   ? @{/user/favorites/ai-detail/{id}(id=${item.id}, collectionId=${collection.collectionId})} 
+                                   : @{/recipes/detail/{id}(id=${item.id})}"
+                                class="w-full text-center text-white font-bold py-2.5 rounded-lg text-sm transition-all shadow-sm flex items-center justify-center gap-2"
+                                th:classappend="${item.isAi} ? 'bg-purple-600 hover:bg-purple-700' : 'bg-green-600 hover:bg-green-700'">
+
+                                <span class="material-symbols-outlined text-lg"
+                                    th:text="${item.isAi ? 'smart_toy' : 'menu_book'}"></span>
+                                <span th:text="${item.isAi ? 'Xem Công Thức AI' : 'Xem Công Thức'}">Xem</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div th:if="${#lists.isEmpty(items)}" class="text-center py-10 text-soft-grey">
+                    <p>Bộ sưu tập này trống.</p>
+                </div>
+
+            </div>
+        </main>
+    </div>
+</body>
+
+</html>

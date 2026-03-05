@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="en">
+
+<head>
+    <div th:replace="~{fragments/head :: common-head}"></div>
+    <title>AI Ước Tính Calo - Zader Food</title>
+
+    <style>
+        /* Tinh chỉnh thanh cuộn cho danh sách kết quả */
+        .custom-scroll::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .custom-scroll::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background-color: #e2e8f0;
+            border-radius: 20px;
+        }
+
+        .custom-scroll:hover::-webkit-scrollbar-thumb {
+            background-color: #cbd5e1;
+        }
+
+        /* Animation riêng */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+    </style>
+</head>
+
+<body class="font-display bg-background-light text-dark-ink">
+
+    <div class="relative flex min-h-screen w-full flex-col">
+
+        <div th:replace="~{fragments/navbar :: header_nav}"></div>
+
+        <main class="flex flex-1 justify-center py-12 px-4 sm:px-6">
+            <div class="flex flex-col w-full max-w-5xl gap-10">
+
+                <div class="flex flex-col gap-3 text-center">
+                    <h1 class="text-4xl sm:text-5xl font-extrabold tracking-tight text-dark-ink">
+                        AI <span class="text-nutri-green">Ước Tính Calo</span>
+                    </h1>
+                    <p class="text-soft-grey text-lg max-w-2xl mx-auto">
+                        Chụp ảnh hoặc mô tả bữa ăn của bạn. Hãy để AI phân tích dinh dưỡng ngay lập tức.
+                    </p>
+                </div>
+
+                <div
+                    class="bg-card-white rounded-2xl shadow-xl shadow-gray-100/50 p-8 flex flex-col gap-8 border border-white">
+
+                    <div id="drop-zone"
+                        class="group border-2 border-dashed border-border-color hover:border-nutri-green hover:bg-nutri-green/5 transition-all duration-300 rounded-xl p-10 flex flex-col items-center justify-center cursor-pointer bg-background-light relative overflow-hidden">
+                        <input type="file" id="imageInput" accept="image/png, image/jpeg, .jpg" class="hidden">
+
+                        <div id="upload-placeholder" class="flex flex-col items-center">
+                            <div
+                                class="h-16 w-16 bg-white rounded-full shadow-sm flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                                <span class="material-symbols-outlined text-4xl text-nutri-green">add_a_photo</span>
+                            </div>
+                            <p class="text-dark-ink font-semibold text-lg">Nhấn để tải ảnh lên</p>
+                            <p class="text-soft-grey text-sm mt-1">hoặc kéo thả vào đây (JPG, PNG)</p>
+                        </div>
+
+                        <img id="preview-image" class="hidden h-64 w-auto object-contain rounded-lg shadow-md z-10"
+                            alt="Preview" />
+
+                        <button id="remove-img-btn"
+                            class="hidden absolute top-4 right-4 bg-white/90 p-2 rounded-full hover:bg-red-50 text-soft-grey hover:text-red-500 shadow-sm z-20 transition-colors"
+                            title="Remove image">
+                            <span class="material-symbols-outlined text-xl">close</span>
+                        </button>
+                    </div>
+
+                    <div id="message-alert"
+                        class="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-100 p-2 rounded-xl flex items-start gap-3 hidden">
+                        <div class="bg-white p-2 rounded-full shadow-sm text-purple-600">
+                            <span class="material-symbols-outlined">hourglass_top</span>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-purple-900 text-sm">Nội Dung Tạo Bởi AI</h4>
+                            <p class="text-xs text-purple-700 mt-1">
+                                AI đang phân tích món ăn bạn đã phản hồi; quá trình này có thể mất 2-3 phút, vui lòng
+                                đợi một chút.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        <div class="relative flex-1">
+                            <input id="textInput"
+                                class="w-full rounded-xl bg-background-light border-transparent focus:border-nutri-green focus:bg-white focus:ring-0 text-dark-ink h-14 pl-5 pr-12 text-lg transition-all placeholder:text-gray-400"
+                                placeholder="VD: Cá hồi nướng măng tây..." />
+                            <span
+                                class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">edit</span>
+                        </div>
+
+                        <button id="analyzeBtn" onclick="analyzeFood()"
+                            class="sm:w-auto w-full min-w-[200px] h-14 bg-nutri-green text-white text-lg font-bold rounded-xl hover:bg-deep-forest transition-all shadow-lg shadow-nutri-green/20 active:scale-95 flex items-center justify-center gap-2">
+                            <span id="btnText">Phân Tích Bữa Ăn</span>
+                            <span id="btnLoader"
+                                class="hidden material-symbols-outlined animate-spin">progress_activity</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="resultsSection" class="hidden flex-col gap-8 animate-fade-in">
+
+                    <div class="bg-card-white rounded-2xl shadow-xl shadow-gray-100/50 p-8 border border-gray-50">
+                        <div
+                            class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8 border-b border-gray-100 pb-8">
+                            <div>
+                                <div class="flex items-center gap-3 mb-2">
+                                    <span
+                                        class="px-3 py-1 bg-nutri-green/10 text-nutri-green text-xs font-bold uppercase rounded-full tracking-wider">Kết
+                                        Quả</span>
+                                    <div class="flex items-center gap-1 text-soft-grey text-sm">
+                                        <span class="material-symbols-outlined text-base">schedule</span>
+                                        <span id="resTime">-- phút</span>
+                                    </div>
+                                </div>
+                                <h2 id="resDishName"
+                                    class="text-3xl md:text-4xl font-extrabold text-dark-ink leading-tight">Tên Món Ăn
+                                </h2>
+                            </div>
+
+                            <div class="flex flex-col items-end min-w-[140px]">
+                                <span class="text-sm font-medium text-soft-grey uppercase tracking-wide">Tổng Năng
+                                    Lượng</span>
+                                <div class="flex items-baseline gap-1 text-nutri-green">
+                                    <span id="resCalories" class="text-5xl md:text-6xl font-black">0</span>
+                                    <span class="text-xl font-bold text-soft-grey">kcal</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                            <div
+                                class="bg-protein-blue/5 p-6 rounded-2xl border border-protein-blue/10 flex flex-col items-center justify-center gap-1 group hover:bg-protein-blue/10 transition-colors">
+                                <span
+                                    class="text-sm font-bold text-protein-blue uppercase tracking-wider">Protein</span>
+                                <span id="resProtein"
+                                    class="text-3xl font-black text-dark-ink group-hover:scale-105 transition-transform">0g</span>
+                            </div>
+                            <div
+                                class="bg-carbs-gold/5 p-6 rounded-2xl border border-carbs-gold/10 flex flex-col items-center justify-center gap-1 group hover:bg-carbs-gold/10 transition-colors">
+                                <span class="text-sm font-bold text-carbs-gold uppercase tracking-wider">Carbs</span>
+                                <span id="resCarbs"
+                                    class="text-3xl font-black text-dark-ink group-hover:scale-105 transition-transform">0g</span>
+                            </div>
+                            <div
+                                class="bg-fat-red/5 p-6 rounded-2xl border border-fat-red/10 flex flex-col items-center justify-center gap-1 group hover:bg-fat-red/10 transition-colors">
+                                <span class="text-sm font-bold text-fat-red uppercase tracking-wider">Fat</span>
+                                <span id="resFat"
+                                    class="text-3xl font-black text-dark-ink group-hover:scale-105 transition-transform">0g</span>
+                            </div>
+                        </div>
+                        <div class="w-100 flex justify-end">
+                            <button onclick="saveCurrentRecipe()"
+                                class="flex items-center gap-2 px-4 mt-3 py-2 bg-green-50 text-green-700 hover:bg-green-100 rounded-lg font-bold transition text-sm">
+                                <span class="material-symbols-outlined text-lg">bookmark_add</span>
+                                Lưu Công Thức AI
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-2">
+                        <div class="bg-card-white p-8 rounded-2xl shadow-lg border border-gray-50 flex flex-col h-full">
+                            <h3 class="text-xl font-bold text-dark-ink mb-6 flex items-center gap-3">
+                                <div class="p-2 bg-green-100 rounded-lg text-nutri-green">
+                                    <span class="material-symbols-outlined">grocery</span>
+                                </div>
+                                Nguyên Liệu
+                            </h3>
+                            <ul id="resIngredients"
+                                class="space-y-4 text-dark-ink custom-scroll overflow-y-auto pr-4 max-h-[400px] flex-1">
+                            </ul>
+                        </div>
+
+                        <div class="bg-card-white p-8 rounded-2xl shadow-lg border border-gray-50 flex flex-col h-full">
+                            <h3 class="text-xl font-bold text-dark-ink mb-6 flex items-center gap-3">
+                                <div class="p-2 bg-orange-100 rounded-lg text-orange-500">
+                                    <span class="material-symbols-outlined">cooking</span>
+                                </div>
+                                Hướng Dẫn Chế Biến
+                            </h3>
+                            <ol id="resInstructions"
+                                class="space-y-6 text-dark-ink custom-scroll overflow-y-auto pr-4 max-h-[400px] flex-1">
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex flex-col gap-6 pt-10 border-t border-gray-200">
+                    <h3 class="text-2xl font-bold text-dark-ink px-2 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-soft-grey">history</span>
+                        Các Lần Quét Gần Đây
+                    </h3>
+                    <div id="historyList" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <div th:replace="~{fragments/toast :: toast-system}"></div>
+
+    <script>
+        // --- 1. Variables & Elements ---
+        const dropZone = document.getElementById('drop-zone');
+        const imageInput = document.getElementById('imageInput');
+        const previewImage = document.getElementById('preview-image');
+        const uploadPlaceholder = document.getElementById('upload-placeholder');
+        const removeImgBtn = document.getElementById('remove-img-btn');
+        const textInput = document.getElementById('textInput');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const btnText = document.getElementById('btnText');
+        const btnLoader = document.getElementById('btnLoader');
+        const resultsSection = document.getElementById('resultsSection');
+
+        let currentAiData = null;
+
+        // --- 2. Image Handling Logic ---
+        dropZone.addEventListener('click', (e) => {
+            if (e.target !== removeImgBtn && !removeImgBtn.contains(e.target))
+                imageInput.click();
+        });
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('border-nutri-green', 'bg-nutri-green/5');
+        });
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('border-nutri-green', 'bg-nutri-green/5');
+        });
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('border-nutri-green', 'bg-nutri-green/5');
+            if (e.dataTransfer.files.length)
+                handleFile(e.dataTransfer.files[0]);
+        });
+        imageInput.addEventListener('change', (e) => {
+            if (e.target.files.length)
+                handleFile(e.target.files[0]);
+        });
+        removeImgBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            resetImage();
+        });
+
+        function handleFile(file) {
+            const validTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+            if (!validTypes.includes(file.type)) {
+                if (typeof Swal !== 'undefined')
+                    Swal.fire('Lỗi', 'Định dạng tệp không hợp lệ! Vui lòng tải lên ảnh PNG hoặc JPG.', 'error');
+                else
+                    ZaderToast.error("Định dạng tệp không hợp lệ!");
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                previewImage.src = e.target.result;
+                previewImage.classList.remove('hidden');
+                removeImgBtn.classList.remove('hidden');
+                uploadPlaceholder.classList.add('hidden');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function resetImage() {
+            imageInput.value = '';
+            previewImage.src = '';
+            previewImage.classList.add('hidden');
+            removeImgBtn.classList.add('hidden');
+            uploadPlaceholder.classList.remove('hidden');
+        }
+
+        // --- 3. API Call ---
+        async function analyzeFood() {
+            const userText = textInput.value.trim();
+            const fileInput = document.getElementById('imageInput');
+            const message_alert = document.getElementById("message-alert");
+
+            if (!userText && (!fileInput.files || fileInput.files.length === 0)) {
+                if (typeof Swal !== 'undefined')
+                    Swal.fire('Cảnh báo', 'Vui lòng nhập tên món ăn hoặc tải ảnh lên.', 'warning');
+                else
+                    ZaderToast.error("Vui lòng nhập tên món ăn hoặc tải ảnh lên.");
+                return;
+            }
+
+            setLoading(true);
+            resultsSection.classList.add('hidden');
+            message_alert.classList.remove("hidden");
+
+            const formData = new FormData();
+            if (userText)
+                formData.append("text", userText);
+            if (fileInput.files.length > 0)
+                formData.append("image", fileInput.files[0]);
+
+            try {
+                // Đảm bảo bạn có endpoint này trong Controller
+                const response = await fetch('/api/ai/analyze', { method: 'POST', body: formData });
+                if (!response.ok)
+                    throw new Error("Server error");
+
+
+                message_alert.classList.add("hidden");
+
+                const resultData = await response.json();
+                if (resultData.error) {
+                    alert(resultData.error);
+                } else {
+                    currentAiData = resultData;
+                    renderResults(resultData);
+                    saveToHistory(resultData);
+                }
+            } catch (error) {
+                console.error(error);
+                if (typeof Swal !== 'undefined')
+                    Swal.fire('Lỗi', 'Không thể phân tích. Vui lòng thử lại.', 'error');
+                else
+                    ZaderToast.error("Không thể phân tích.");
+
+                console.log(error);
+                console.log(response);
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        function setLoading(isLoading) {
+            analyzeBtn.disabled = isLoading;
+            if (isLoading) {
+                btnText.textContent = "Đang phân tích...";
+                btnLoader.classList.remove('hidden');
+                analyzeBtn.classList.add('opacity-80', 'cursor-not-allowed');
+            } else {
+                btnText.textContent = "Phân Tích Bữa Ăn";
+                btnLoader.classList.add('hidden');
+                analyzeBtn.classList.remove('opacity-80', 'cursor-not-allowed');
+            }
+        }
+
+        // --- 4. Render Results ---
+        function renderResults(data) {
+            document.getElementById('resDishName').textContent = data.dishName || "Món Ăn Không Xác Định";
+            document.getElementById('resTime').textContent = data.time || "-- phút";
+            document.getElementById('resCalories').textContent = data.calories || 0;
+            document.getElementById('resProtein').textContent = data.protein || "0g";
+            document.getElementById('resCarbs').textContent = data.carbs || "0g";
+            document.getElementById('resFat').textContent = data.fat || "0g";
+
+            document.getElementById('resIngredients').innerHTML = (data.ingredients || []).map(i => `
+                <li class="flex items-start gap-3 group">
+                    <span class="mt-2 h-2 w-2 rounded-full bg-nutri-green flex-shrink-0 group-hover:scale-125 transition-transform"></span>
+                    <span class="text-base text-gray-700 leading-relaxed">${i}</span>
+                </li>`).join('');
+
+            document.getElementById('resInstructions').innerHTML = (data.instructions || []).map((step, index) => `
+                <li class="flex gap-4">
+                    <span class="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-orange-100 text-orange-600 font-bold text-sm">${index + 1}</span>
+                    <span class="text-base text-gray-700 leading-loose flex-1 pt-1">${step}</span>
+                </li>`).join('');
+
+            resultsSection.classList.remove('hidden');
+            setTimeout(() => {
+                resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
+        }
+
+        // --- 5. History ---
+        function saveToHistory(data) {
+            let history = JSON.parse(localStorage.getItem('zaderFoodHistory') || '[]');
+            const newEntry = { name: data.dishName, cals: data.calories, date: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) };
+            if (history.length > 0 && history[0].name === newEntry.name)
+                return;
+            history.unshift(newEntry);
+            if (history.length > 6)
+                history.pop();
+            localStorage.setItem('zaderFoodHistory', JSON.stringify(history));
+            loadHistory();
+        }
+
+        function loadHistory() {
+            const history = JSON.parse(localStorage.getItem('zaderFoodHistory') || '[]');
+            const listContainer = document.getElementById('historyList');
+            if (history.length === 0) {
+                listContainer.innerHTML = `<p class="text-soft-grey col-span-3 text-center py-4">Chưa có đánh giá nào. Hãy thử phân tích một bữa ăn !</p>`;
+                return;
+            }
+            listContainer.innerHTML = history.map(item => `
+                <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow flex justify-between items-center cursor-pointer">
+                    <div>
+                        <h4 class="font-bold text-dark-ink line-clamp-1">${item.name}</h4>
+                        <p class="text-xs text-soft-grey mt-1">${item.date}</p>
+                    </div>
+                    <div class="text-right">
+                        <span class="block font-black text-nutri-green text-lg">${item.cals}</span>
+                        <span class="text-xs text-soft-grey">kcal</span>
+                    </div>
+                </div>`).join('');
+        }
+
+        function saveCurrentRecipe() {
+            if (!currentAiData) {
+                if (typeof ZaderToast !== 'undefined')
+                    ZaderToast.error("Không có dữ liệu để lưu!");
+                return;
+            }
+
+            // [FIX] Kiểm tra xem có ảnh preview không trước khi lấy src
+            let imageUrlToSave = 'https://placehold.co/600x400?text=AI+Food'; // Ảnh mặc định
+            const imgElem = previewImage;
+
+            // Chỉ lấy src nếu thẻ tồn tại và không bị ẩn (có chứa ảnh thật)
+            if (imgElem && imgElem.src && !imgElem.src.includes('placehold.co') && !imgElem.classList.contains('hidden')) {
+                imageUrlToSave = imgElem.src;
+            }
+
+            // Hiệu ứng loading
+            if (typeof ZaderToast !== 'undefined')
+                var toastloadingid = ZaderToast.loading("Đang lưu vào mục yêu thích...");
+
+            // Chuẩn bị payload
+            const payload = {
+                data: currentAiData,
+                imageUrl: imageUrlToSave
+            };
+
+            // Gọi API
+            fetch('/ai-tools/save-recipe', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            })
+                .then(response => {
+                    if (!response.ok)
+                        throw new Error("Lỗi khi lưu");
+                    ZaderToast.remove(toastloadingid);
+                    return response.json();
+                })
+                .then(result => {
+                    if (typeof ZaderToast !== 'undefined')
+                        ZaderToast.success("Đã lưu thành công!");
+                })
+                .catch(error => {
+                    console.error(error);
+                    if (typeof ZaderToast !== 'undefined')
+                        ZaderToast.error("Gặp lỗi khi lưu công thức.");
+                });
+        }
+
+        window.onload = loadHistory;
+    </script>
+</body>
+
+</html>

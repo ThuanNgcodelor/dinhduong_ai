@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{fragments/head :: common-head}">
+    <title>Điều Khoản Dịch Vụ - ZaderFood</title>
+</head>
+
+<body class="bg-smart-white dark:bg-background-dark font-display min-h-screen flex flex-col">
+
+    <div
+        class="fixed top-0 z-50 w-full bg-white/90 dark:bg-[#211511]/90 backdrop-blur-md shadow-sm border-b border-gray-100 dark:border-gray-800">
+        <div th:replace="~{fragments/navbar :: header_nav}"></div>
+    </div>
+
+    <main class="flex-grow pt-28 pb-16">
+        <div class="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+
+            <div class="text-center mb-12">
+                <h1 class="text-3xl md:text-4xl font-black text-dark-ink dark:text-white mb-4">Điều Khoản Dịch Vụ</h1>
+                <p class="text-soft-grey dark:text-gray-400">Ngày có hiệu lực: 14 tháng 12 năm 2025</p>
+            </div>
+
+            <div
+                class="bg-white dark:bg-[#1e1e1e] p-8 md:p-12 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
+
+                <div class="space-y-8 text-dark-ink dark:text-gray-300 leading-relaxed">
+
+                    <section>
+                        <h2 class="text-xl font-bold text-primary mb-3">1. Chấp nhận các Điều khoản</h2>
+                        <p>Bằng cách truy cập hoặc sử dụng trang web ZaderFood ("Dịch vụ"), bạn đồng ý bị ràng buộc bởi
+                            các Điều khoản Dịch vụ này. Nếu bạn không đồng ý với bất kỳ phần nào của các điều khoản, bạn
+                            không được phép truy cập Dịch vụ.</p>
+                    </section>
+
+                    <section class="bg-orange-50 dark:bg-orange-900/20 p-4 rounded-lg border-l-4 border-orange-500">
+                        <h2 class="text-lg font-bold text-orange-700 dark:text-orange-400 mb-2">2. Tuyên bố từ chối
+                            trách nhiệm y tế</h2>
+                        <p class="text-sm">
+                            ZaderFood chỉ là một công cụ để lên kế hoạch bữa ăn và cung cấp thông tin. <strong>Chúng tôi
+                                không phải là một tổ chức y khoa.</strong> Nội dung, các tính toán lượng calo và gợi ý
+                            dinh dưỡng được hệ thống của chúng tôi cung cấp (bao gồm cả các kế hoạch do AI tạo ra) không
+                            nên được coi là lời khuyên, chẩn đoán hoặc điều trị y tế. Hãy luôn tham khảo ý kiến của bác
+                            sĩ hoặc chuyên gia chăm sóc sức khỏe có chuyên môn trước khi thực hiện những thay đổi đáng
+                            kể đối với chế độ ăn uống hoặc thói quen tập thể dục của bạn.
+                        </p>
+                    </section>
+
+                    <section>
+                        <h2 class="text-xl font-bold text-primary mb-3">3. Sử dụng Dịch vụ</h2>
+                        <p>Bạn đồng ý chỉ sử dụng ZaderFood cho các mục đích hợp pháp. Bạn chịu trách nhiệm bảo mật tài
+                            khoản và mật khẩu của mình. Bạn đồng ý chịu trách nhiệm cho mọi hoạt động diễn ra dưới tài
+                            khoản của bạn.</p>
+                    </section>
+
+                    <section>
+                        <h2 class="text-xl font-bold text-primary mb-3">4. Các tính năng AI</h2>
+                        <p>Dịch vụ của chúng tôi bao gồm các tính năng được hỗ trợ bởi Trí tuệ Nhân tạo (AI), chẳng hạn
+                            như nhận diện món ăn và tự động lên kế hoạch bữa ăn. Mặc dù chúng tôi cố gắng đảm bảo tính
+                            chính xác, dự đoán của AI có thể thay đổi hoặc không chính xác. Bạn xác nhận rằng ZaderFood
+                            không đảm bảo độ chính xác 100% của các dữ liệu dinh dưỡng lấy từ các phân tích của AI.</p>
+                    </section>
+
+                    <section>
+                        <h2 class="text-xl font-bold text-primary mb-3">5. Sở hữu trí tuệ</h2>
+                        <p>Dịch vụ cùng với nội dung, tính năng và chức năng ban đầu của nó thuộc sở hữu độc quyền của
+                            ZADER Technology Solutions và các bên cấp phép của chúng tôi. Nội dung của chúng tôi được
+                            bảo vệ bởi luật bản quyền và các luật khác của Việt Nam và quốc tế.</p>
+                    </section>
+
+                    <section>
+                        <h2 class="text-xl font-bold text-primary mb-3">6. Chấm dứt</h2>
+                        <p>Chúng tôi có thể chấm dứt hoặc đình chỉ tài khoản của bạn ngay lập tức, mà không cần thông
+                            báo trước hay chịu trách nhiệm, vì bất kỳ lý do gì, bao gồm (nhưng không giới hạn) việc bạn
+                            vi phạm các Điều khoản này.</p>
+                    </section>
+
+                    <section>
+                        <h2 class="text-xl font-bold text-primary mb-3">7. Những thay đổi</h2>
+                        <p>Chúng tôi có quyền, theo quyết định riêng của mình, sửa đổi hoặc thay thế các Điều khoản này
+                            bất kỳ lúc nào. Bằng cách tiếp tục truy cập hoặc sử dụng Dịch vụ của chúng tôi sau khi các
+                            sửa đổi đó có hiệu lực, bạn đồng ý chịu sự ràng buộc của các điều khoản mới.</p>
+                    </section>
+
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer th:replace="~{fragments/footer :: footer_section}"></footer>
+</body>
+
+</html>
