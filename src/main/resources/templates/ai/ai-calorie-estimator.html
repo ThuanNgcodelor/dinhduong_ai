@@ -3,7 +3,7 @@
 
 <head>
     <div th:replace="~{fragments/head :: common-head}"></div>
-    <title>AI Ước Tính Calo - Zader Food</title>
+    <title>AI Ước Tính Calo - DinhDuongCanTho</title>
 
     <style>
         /* Tinh chỉnh thanh cuộn cho danh sách kết quả */
@@ -102,13 +102,6 @@
                     </div>
 
                     <div class="flex flex-col sm:flex-row gap-4">
-                        <div class="relative flex-1">
-                            <input id="textInput"
-                                class="w-full rounded-xl bg-background-light border-transparent focus:border-nutri-green focus:bg-white focus:ring-0 text-dark-ink h-14 pl-5 pr-12 text-lg transition-all placeholder:text-gray-400"
-                                placeholder="VD: Cá hồi nướng măng tây..." />
-                            <span
-                                class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">edit</span>
-                        </div>
 
                         <button id="analyzeBtn" onclick="analyzeFood()"
                             class="sm:w-auto w-full min-w-[200px] h-14 bg-nutri-green text-white text-lg font-bold rounded-xl hover:bg-deep-forest transition-all shadow-lg shadow-nutri-green/20 active:scale-95 flex items-center justify-center gap-2">
@@ -228,7 +221,6 @@
         const previewImage = document.getElementById('preview-image');
         const uploadPlaceholder = document.getElementById('upload-placeholder');
         const removeImgBtn = document.getElementById('remove-img-btn');
-        const textInput = document.getElementById('textInput');
         const analyzeBtn = document.getElementById('analyzeBtn');
         const btnText = document.getElementById('btnText');
         const btnLoader = document.getElementById('btnLoader');
@@ -292,15 +284,14 @@
 
         // --- 3. API Call ---
         async function analyzeFood() {
-            const userText = textInput.value.trim();
             const fileInput = document.getElementById('imageInput');
             const message_alert = document.getElementById("message-alert");
 
-            if (!userText && (!fileInput.files || fileInput.files.length === 0)) {
+            if (!fileInput.files || fileInput.files.length === 0) {
                 if (typeof Swal !== 'undefined')
-                    Swal.fire('Cảnh báo', 'Vui lòng nhập tên món ăn hoặc tải ảnh lên.', 'warning');
+                    Swal.fire('Cảnh báo', 'Vui lòng tải ảnh món ăn lên để AI phân tích.', 'warning');
                 else
-                    ZaderToast.error("Vui lòng nhập tên món ăn hoặc tải ảnh lên.");
+                    ZaderToast.error("Vui lòng tải ảnh món ăn lên.");
                 return;
             }
 
@@ -309,8 +300,6 @@
             message_alert.classList.remove("hidden");
 
             const formData = new FormData();
-            if (userText)
-                formData.append("text", userText);
             if (fileInput.files.length > 0)
                 formData.append("image", fileInput.files[0]);
 

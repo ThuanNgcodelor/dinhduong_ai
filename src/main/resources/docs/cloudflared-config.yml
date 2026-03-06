@@ -1,0 +1,24 @@
+# Cloudflare Tunnel Configuration
+# Connects localhost:8080 to dinhduongcantho.io.vn
+#
+# Cách cấu hình và chạy lần đầu:
+#   1. Đăng nhập:                cloudflared tunnel login
+#   2. Tạo tunnel mới:           cloudflared tunnel create dinhduongcantho
+#      (Lệnh này sẽ trả về một UUID, ví dụ: a1b2c3d4-xxxx-xxxx...)
+#      -> Copy UUID đó thay vào "tunnel:" và tên file .json ở dưới.
+#   3. Gắn tên miền vào tunnel:  cloudflared tunnel route dns dinhduongcantho dinhduongcantho.io.vn
+#
+# Cách chạy web (đảm bảo Spring Boot localhost:8080 đang chạy trước):
+#   cloudflared tunnel --config d:\Spring\NUTRITION_TRACKER\src\main\resources\docs\cloudflared-config.yml run dinhduongcantho
+#
+# =========================================================================
+
+tunnel: dinhduongcantho
+credentials-file: C:\Users\nguye\.cloudflared\5c94920d-2125-4a97-baba-eed9403b9625.json
+
+ingress:
+  - hostname: dinhduongcantho.io.vn
+    service: http://localhost:8080
+  - hostname: "*.dinhduongcantho.io.vn"
+    service: http://localhost:8080
+  - service: http_status:404

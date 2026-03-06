@@ -64,6 +64,18 @@
                     Gửi Mã OTP
                 </button>
 
+                <div class="w-full flex items-center my-6">
+                    <div class="flex-1 border-t border-smart-mist"></div>
+                    <span class="px-3 text-sm text-soft-grey bg-white/0">Hoặc</span>
+                    <div class="flex-1 border-t border-smart-mist"></div>
+                </div>
+
+                <a th:href="@{/oauth2/authorization/google}"
+                    class="flex h-12 w-full items-center justify-center gap-3 rounded-lg border border-smart-mist bg-white text-base font-medium text-dark-ink transition-all hover:bg-gray-50 hover:shadow-md focus:outline-none">
+                    <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" class="h-5 w-5" />
+                    Đăng ký bằng Google
+                </a>
+
                 <p class="text-soft-grey text-sm pt-6">Đã có tài khoản? <a
                         class="font-bold text-nutri-green hover:underline" th:href="@{/login}">Đăng nhập</a></p>
             </form>
