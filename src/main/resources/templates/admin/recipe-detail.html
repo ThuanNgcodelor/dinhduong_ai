@@ -252,18 +252,21 @@
                                             th:name="|recipeIngredients[${iter.index}].unit|" th:value="${ri.unit}">
                                         <input type="hidden" class="inp-note"
                                             th:name="|recipeIngredients[${iter.index}].note|" th:value="${ri.note}">
-                                        <input type="hidden" class="inp-name" th:value="${ri.ingredient.name}"> <img
-                                            th:src="${ri.ingredient.imageUrl}"
+                                        <input type="hidden" class="inp-name"
+                                            th:value="${ri.ingredient != null ? ri.ingredient.name : '(Không xác định)'}">
+                                        <img th:src="${ri.ingredient != null and ri.ingredient.imageUrl != null ? ri.ingredient.imageUrl : 'https://placehold.co/40x40'}"
                                             onerror="this.src='https://placehold.co/40x40'"
                                             class="w-10 h-10 rounded object-cover border border-gray-200 bg-white">
 
                                         <div class="flex-1">
-                                            <p class="text-sm font-bold text-dark-ink" th:text="${ri.ingredient.name}">
+                                            <p class="text-sm font-bold text-dark-ink"
+                                                th:text="${ri.ingredient != null ? ri.ingredient.name : '(Nguyên liệu bị xóa)'}">
                                                 Name</p>
                                             <div class="flex gap-2 text-xs text-soft-grey">
                                                 <span class="view-qty" th:text="${ri.quantity}">100</span>
                                                 <span class="view-unit" th:text="${ri.unit}">g</span>
-                                                <span class="view-note italic text-gray-400" th:if="${ri.note != ''}"
+                                                <span class="view-note italic text-gray-400"
+                                                    th:if="${ri.note != null and ri.note != ''}"
                                                     th:text="'(' + ${ri.note} + ')'"></span>
                                             </div>
                                         </div>

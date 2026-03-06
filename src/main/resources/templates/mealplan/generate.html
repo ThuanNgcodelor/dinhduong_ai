@@ -291,7 +291,8 @@
             <div class="p-8 text-center">
                 <h2 class="text-2xl font-black text-dark-ink dark:text-white mb-3">Yêu Cầu Cài Đặt</h2>
                 <p class="text-gray-500 dark:text-gray-400 mb-6 leading-relaxed">
-                    Để tạo một kế hoạch bữa ăn được cá nhân hóa, ZaderFood cần các chỉ số cơ thể của bạn (<strong>BMR,
+                    Để tạo một kế hoạch bữa ăn được cá nhân hóa, DinhDuongCanTho cần các chỉ số cơ thể của bạn
+                    (<strong>BMR,
                         TDEE</strong>) và <strong>Mục Tiêu Calo</strong>.
                 </p>
 
@@ -327,7 +328,9 @@
     </script>
 
     <script th:inline="javascript">
-        let abortController = null;
+        let pollIntervalId = null;
+        let elapsedSeconds = 0;
+        let timerIntervalId = null;
 
         document.addEventListener('DOMContentLoaded', function () {
             const dateInput = document.getElementById('startDateInput');
@@ -340,43 +343,78 @@
             event.preventDefault();
             const form = document.getElementById('generateForm');
             const formData = new FormData(form);
+            const startDateStr = document.getElementById('startDateInput').value;
 
             toggleLoadingState(true);
-            abortController = new AbortController();
+            elapsedSeconds = 0;
+            startTimer();
 
+            // Bước 1: Submit job – trả về jobId ngay lập tức (< 1 giây)
+            const submitParams = new URLSearchParams({
+                calories: formData.get('calories') || '2000',
+                dietType: formData.get('dietType') || '',
+                goal: formData.get('goal') || 'MAINTENANCE'
+            });
+
+            let jobId;
             try {
-                const response = await fetch('/meal-plan/generate', {
-                    method: 'POST',
-                    body: formData,
-                    signal: abortController.signal
-                });
+                const res = await fetch('/api/meal-plan/generate-async?' + submitParams.toString(), { method: 'POST' });
+                const data = await res.json();
+                jobId = data.jobId;
+            } catch (e) {
+                ZaderToast.error('Không thể khởi động AI. Hãy kiểm tra lại kết nối.');
+                toggleLoadingState(false);
+                stopTimer();
+                return;
+            }
 
-                const data = await response.json();
+            // Bước 2: Poll trạng thái mỗi 5 giây cho đến khi AI xong
+            pollIntervalId = setInterval(async () => {
+                try {
+                    const statusUrl = `/api/meal-plan/status/${jobId}?startDateStr=${encodeURIComponent(startDateStr)}`;
+                    const res = await fetch(statusUrl);
+                    const data = await res.json();
 
-                if (response.ok && data.status === 'success') {
-                    ZaderToast.success(data.message);
-                    setTimeout(() => window.location.href = data.redirectUrl, 500);
-                } else {
-                    console.error("Server Error:", data);
-                    ZaderToast.error(data.message || "Tạo kế hoạch thất bại");
+                    if (data.status === 'DONE') {
+                        clearInterval(pollIntervalId);
+                        stopTimer();
+                        ZaderToast.success(data.message);
+                        setTimeout(() => window.location.href = data.redirectUrl, 500);
+                    } else if (data.status === 'ERROR') {
+                        clearInterval(pollIntervalId);
+                        stopTimer();
+                        ZaderToast.error(data.message || 'Tạo kế hoạch thất bại');
+                        toggleLoadingState(false);
+                    }
+                    // Nếu PENDING thì tiếp tục chờ
+                } catch (e) {
+                    clearInterval(pollIntervalId);
+                    stopTimer();
+                    ZaderToast.error('Lỗi kết nối khi kiểm tra kết quả AI.');
                     toggleLoadingState(false);
                 }
-            } catch (error) {
-                if (error.name === 'AbortError') {
-                    ZaderToast.show('Đã Hủy', 'info');
-                } else {
-                    console.error(error);
-                    ZaderToast.error('Kết nối thất bại. AI có đang chạy không?');
+            }, 5000);
+        }
+
+        function startTimer() {
+            timerIntervalId = setInterval(() => {
+                elapsedSeconds++;
+                const timerEl = document.getElementById('aiTimer');
+                if (timerEl) {
+                    const m = Math.floor(elapsedSeconds / 60).toString().padStart(2, '0');
+                    const s = (elapsedSeconds % 60).toString().padStart(2, '0');
+                    timerEl.textContent = `${m}:${s}`;
                 }
-                toggleLoadingState(false);
-            }
+            }, 1000);
+        }
+
+        function stopTimer() {
+            if (timerIntervalId) clearInterval(timerIntervalId);
         }
 
         function cancelGeneration() {
-            if (abortController) {
-                abortController.abort();
-                abortController = null;
-            }
+            if (pollIntervalId) clearInterval(pollIntervalId);
+            stopTimer();
             toggleLoadingState(false);
         }
 
@@ -397,7 +435,6 @@
                 iconGenerate.classList.add('hidden');
                 textGenerate.innerText = 'Đang Nấu...';
                 spinner.classList.remove('hidden');
-
                 btnArrange.classList.add('hidden');
                 btnCancel.classList.remove('hidden');
                 alertBox.classList.remove('hidden');
@@ -409,7 +446,6 @@
                 iconGenerate.classList.remove('hidden');
                 textGenerate.innerText = 'Tạo Kế Hoạch Hàng Tuần';
                 spinner.classList.add('hidden');
-
                 btnArrange.classList.remove('hidden');
                 btnCancel.classList.add('hidden');
                 alertBox.classList.add('hidden');
@@ -419,19 +455,15 @@
 
         function submitManual() {
             const dateInput = document.getElementById('startDateInput');
-            // Lấy giá trị từ các input ẩn
             const calInput = document.querySelector('input[name="calories"]');
             const dietInput = document.querySelector('input[name="dietType"]');
             const goalInput = document.querySelector('input[name="goal"]');
-
             const params = new URLSearchParams({
                 startDateStr: dateInput.value || '',
                 calories: calInput.value || '2000',
-                dietType: dietInput.value || '', // Diet giờ là chuỗi (Keto, Vegan)
+                dietType: dietInput.value || '',
                 goal: goalInput.value || 'MAINTENANCE'
             });
-
-            console.log("Manual Params:", params.toString());
             window.location.href = `/meal-plan/manual?${params.toString()}`;
         }
     </script>

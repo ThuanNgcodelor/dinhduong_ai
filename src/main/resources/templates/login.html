@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <title>Đăng Nhập - ZaderFood</title>
+    <title>Đăng Nhập - DinhDuongCanTho</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com" rel="preconnect" />
     <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
@@ -122,6 +122,12 @@
                         <div class="relative flex justify-center text-sm"><span
                                 class="bg-white px-2 text-soft-grey">Hoặc</span></div>
                     </div>
+
+                    <a th:href="@{/oauth2/authorization/google}"
+                        class="flex h-12 w-full items-center justify-center gap-3 rounded-lg border border-smart-mist bg-white text-base font-medium text-dark-ink transition-all hover:bg-gray-50 hover:shadow-md focus:outline-none">
+                        <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" class="h-5 w-5" />
+                        Đăng nhập bằng Google
+                    </a>
 
                     <p class="text-center text-sm text-soft-grey">Chưa có tài khoản?
                         <a class="font-bold text-nutri-green hover:underline" th:href="@{/register/step1}">Đăng ký
