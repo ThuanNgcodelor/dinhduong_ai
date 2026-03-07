@@ -226,11 +226,13 @@ public class MealPlanService {
     }
 
     private MealType mapMealType(String typeStr) {
-        if (typeStr == null) {
+        if (typeStr == null || typeStr.isEmpty()) {
             return MealType.BREAKFAST;
         }
         try {
-            return MealType.valueOf(typeStr.toUpperCase());
+            // Chuyển sang UPPERCASE và thay thế khoảng trắng bằng gạch dưới (VD: "Snack Morning" -> "SNACK_MORNING")
+            String normalized = typeStr.trim().toUpperCase().replace(" ", "_");
+            return MealType.valueOf(normalized);
         } catch (IllegalArgumentException e) {
             return MealType.BREAKFAST;
         }
@@ -956,5 +958,70 @@ public class MealPlanService {
 
     public List<DailyMealPlan> getUpcomingPlans(Integer userId) {
         return dailyRepo.findByUserIdAndPlanDateGreaterThanEqualOrderByPlanDateAsc(userId, LocalDate.now());
+    }
+
+    /**
+     * Xây dựng WeeklyPlanDTO từ danh sách recipeId người dùng đã chọn.
+     * Phân bổ theo vòng tròn (round-robin) qua 7 ngày × 6 bữa.
+     * Calo mỗi bữa được tính theo tỷ lệ phần trăm của mục tiêu ngày.
+     */
+    public WeeklyPlanDTO buildPlanFromRecipes(List<Integer> recipeIds, int targetDailyCal, LocalDate startDate) {
+        // Lấy thông tin Recipe từ DB
+        List<Recipe> recipes = recipeRepo.findAllById(recipeIds);
+        if (recipes.isEmpty()) {
+            throw new IllegalArgumentException("Không tìm thấy công thức nào với ID đã chọn.");
+        }
+
+        // Tỷ lệ calo từng bữa (% của mục tiêu ngày)
+        String[]  mealTypes  = {"Breakfast", "Snack_Morning", "Lunch", "Snack_Afternoon", "Dinner", "Snack_Evening"};
+        double[]  mealRatios = {0.20,        0.10,            0.30,   0.10,               0.25,    0.05};
+
+        WeeklyPlanDTO plan = new WeeklyPlanDTO();
+        plan.days = new ArrayList<>();
+
+        int recipeIndex = 0; // Chỉ số vòng tròn qua danh sách recipe
+
+        for (int dayNum = 0; dayNum < 7; dayNum++) {
+            WeeklyPlanDTO.DailyPlan day = new WeeklyPlanDTO.DailyPlan();
+            day.meals = new ArrayList<>();
+            day.totalCalories = 0;
+            // dayName sẽ được gán bởi Controller sau khi trả về
+
+            for (int mealIdx = 0; mealIdx < mealTypes.length; mealIdx++) {
+                Recipe r = recipes.get(recipeIndex % recipes.size());
+                recipeIndex++;
+
+                // Tính calo mục tiêu cho bữa này
+                int targetMealCal = (int) Math.round(targetDailyCal * mealRatios[mealIdx]);
+
+                // Calo gốc của recipe (1 phần)
+                int baseCal = r.getTotalCalories() != null
+                        ? r.getTotalCalories().intValue()
+                        : 300; // fallback nếu null
+
+                // Tính multiplier để đạt calo mục tiêu
+                // Ví dụ: targetMealCal=440, baseCal=220 → multiplier=2.0
+                double multiplier = baseCal > 0 ? (double) targetMealCal / baseCal : 1.0;
+                // Làm tròn 0.5 gần nhất, giới hạn 0.5 – 5.0
+                multiplier = Math.round(multiplier * 2.0) / 2.0;
+                multiplier = Math.max(0.5, Math.min(5.0, multiplier));
+
+                int actualCal = (int) Math.round(baseCal * multiplier);
+
+                WeeklyPlanDTO.Meal meal = new WeeklyPlanDTO.Meal();
+                meal.type = mealTypes[mealIdx];
+                meal.recipeId = r.getRecipeId();
+                meal.recipeName = r.getName();
+                meal.calories = actualCal;
+                meal.servingWeightGrams = r.getServingWeightGrams();
+
+                day.meals.add(meal);
+                day.totalCalories += actualCal;
+            }
+
+            plan.days.add(day);
+        }
+
+        return plan;
     }
 }

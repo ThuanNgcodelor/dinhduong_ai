@@ -1,5 +1,25 @@
 package com.david.NUTRITION_TRACNKER.controller;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+
 import com.david.NUTRITION_TRACNKER.dto.IngredientInputDTO;
 import com.david.NUTRITION_TRACNKER.dto.RecipeCreationDTO;
 import com.david.NUTRITION_TRACNKER.dto.RecipeMatchDTO;
@@ -14,25 +34,6 @@ import com.david.NUTRITION_TRACNKER.repository.ReviewRepository;
 import com.david.NUTRITION_TRACNKER.service.CustomUserDetails;
 import com.david.NUTRITION_TRACNKER.service.IngredientService;
 import com.david.NUTRITION_TRACNKER.service.RecipeService;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.ResponseBody;
 
 @Controller
 @RequestMapping("/recipes")
@@ -121,7 +122,7 @@ public class RecipeController {
             @AuthenticationPrincipal CustomUserDetails currentUser) {
 
         if (currentUser == null) {
-            return "redirect:/login"; // Bắt buộc login mới được review
+            return "redirect:/login"; 
         }
 
         // Set các thông tin cần thiết
@@ -272,19 +273,17 @@ public class RecipeController {
 
     @GetMapping("/all-mini")
     public ResponseEntity<?> getAllRecipesMini() {
-        // Lấy toàn bộ món ăn (hoặc giới hạn 500 món nếu DB quá lớn sau này)
-        // Lưu ý: Chỉ lấy các trường cần thiết để JSON nhẹ nhất có thể
         List<Recipe> recipes = recipeRepository.findAll();
 
         List<Map<String, Object>> result = recipes.stream().map(r -> {
             Map<String, Object> map = new java.util.HashMap<>();
             map.put("recipeId", r.getRecipeId());
-            map.put("name", r.getName()); // Tên để search
-            map.put("calories", r.getTotalCalories()); // Calo để lọc
+            map.put("name", r.getName());
+            map.put("calories", r.getTotalCalories()); // Calo toàn bộ món (1 phần)
+            map.put("servings", r.getServings() != null ? r.getServings() : 1); // Số phần
+            // Khối lượng 1 phần (gram) - null nếu chưa nhập
+            map.put("servingWeightGrams", r.getServingWeightGrams());
             map.put("image", r.getImageUrl() != null ? r.getImageUrl() : "/images/default-food.png");
-
-            // Thêm trường tìm kiếm không dấu (optional - để tìm 'pho' ra 'phở')
-            // map.put("searchString", removeAccents(r.getName()).toLowerCase()); 
             return map;
         }).collect(Collectors.toList());
 

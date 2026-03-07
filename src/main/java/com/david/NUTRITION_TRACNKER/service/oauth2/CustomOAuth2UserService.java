@@ -43,12 +43,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                     .build();
             return userRepository.save(newUser);
         });
-
-        // If the user registered locally but is now logging in via Google, we can 
-        // silently upgrade or simply allow them to login. Since they verified via Google,
-        // it's secure. We will keep their provider as LOCAL if it was LOCAL to not break
-        // normal login, OR we can switch it to GOOGLE/update their name. 
-        // For now, we just return the user mapping. They can login.
         
         return new com.david.NUTRITION_TRACNKER.service.CustomUserDetails(user, oauth2User.getAttributes());
     }

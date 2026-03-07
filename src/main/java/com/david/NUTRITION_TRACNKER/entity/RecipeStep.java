@@ -46,6 +46,9 @@ public class RecipeStep implements Serializable {
 
     @Column(name = "CreatedAt")
     private LocalDateTime createdAt;
+    @Column(name = "UpdatedAt")
+    private LocalDateTime updatedAt;
+
     
     // JOIN
     @ManyToOne

@@ -1,8 +1,10 @@
 package com.david.NUTRITION_TRACNKER.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.david.NUTRITION_TRACNKER.dto.IngredientAnalysisDTO;
+import java.util.Base64;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -11,7 +13,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.*;
+import com.david.NUTRITION_TRACNKER.dto.IngredientAnalysisDTO;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 public class OllamaIngredientService {
@@ -30,13 +34,13 @@ public class OllamaIngredientService {
                 base64Image = Base64.getEncoder().encodeToString(imageFile.getBytes());
             }
 
-            // 2. Tạo Prompt (Tối ưu cho LLaVA để lấy Macros)
+            // 2. Tạo Prompt - BẮT BUỘC TIẾNG VIỆT
             String promptText = String.format(
-                "You are a nutrition expert. Analyze this ingredient: '%s' (Category: %s). " +
-                "Base unit is: %s. " +
-                "Estimate the average nutritional values for 100%s of this ingredient based on the name and image (if provided). " +
-                "Return ONLY a JSON object with these keys: 'calories' (number), 'protein' (number), 'fat' (number), 'carbs' (number). " +
-                "Do not include any explanation or markdown formatting like ```json. Just raw JSON.", 
+                "Bạn là chuyên gia dinh dưỡng Việt Nam. Hãy phân tích nguyên liệu thực phẩm sau: '%s' (Danh mục: %s). " +
+                "Đơn vị cơ bản là: %s. " +
+                "Ước tính giá trị dinh dưỡng trung bình cho 100%s của nguyên liệu này dựa trên tên và ảnh (nếu có). " +
+                "CHỈ trả về một đối tượng JSON với các khóa: 'calories' (số), 'protein' (số), 'fat' (số), 'carbs' (số). " +
+                "Không thêm giải thích hay định dạng markdown như ```json. Chỉ trả về JSON thuần túy.",
                 name, category, baseUnit, baseUnit
             );
 

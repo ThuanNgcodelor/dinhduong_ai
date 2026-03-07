@@ -346,18 +346,23 @@
             const badgeId = dayCard.querySelector('.total-cal-badge').id;
             const dayIndex = badgeId.replace('cal-day-', '');
 
-            // HTML mẫu cho slot rỗng
+            // HTML mẫu cho slot rỗng (dùng đúng cấu trúc của fragment)
             const newSlot = document.createElement('div');
-            newSlot.className = "meal-slot relative group transition-all mt-2";
+            newSlot.className = "meal-slot relative group transition-all mt-1";
             newSlot.setAttribute('data-day-index', dayIndex);
             newSlot.setAttribute('data-meal-type', type);
+            newSlot.setAttribute('data-base-cal', '0');
             newSlot.setAttribute('ondragover', 'allowDrop(event)');
             newSlot.setAttribute('ondrop', 'drop(event)');
 
             newSlot.innerHTML = `
              <input type="hidden" class="input-meal-item-id" value="">
              <input type="hidden" class="input-recipe-id" value="">
-        
+             <input type="hidden" class="input-recipe-name" value="Kéo công thức vào đây">
+             <input type="hidden" class="input-recipe-base-cal" value="0">
+             <input type="hidden" class="input-recipe-cal" value="0">
+             <input type="hidden" class="input-serving-multiplier" value="1.0">
+         
              <button onclick="removeMealSlot(this)" type="button" 
                      class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10 shadow-sm cursor-pointer">
                  <span class="material-symbols-outlined text-[12px]">close</span>
@@ -368,14 +373,11 @@
                      <span class="text-[10px] text-gray-400 meal-cal">0 kcal</span>
                  </div>
                  <p class="text-xs text-chef-orange mt-1 italic hint-text pointer-events-none">Chỗ Trống</p>
-                 <input type="hidden" class="input-recipe-id" value="">
-                 <input type="hidden" class="input-recipe-name" value="Kéo công thức vào đây">
-                 <input type="hidden" class="input-recipe-cal" value="0">
              </div>
              <div class="absolute inset-0 bg-primary/10 border-2 border-primary border-dashed rounded-lg hidden pointer-events-none drop-overlay flex items-center justify-center">
                 <span class="text-primary font-bold text-sm">Thả để thay thế</span>
              </div>
-        `;
+         `;
 
             container.appendChild(newSlot);
         }
@@ -394,6 +396,131 @@
             // Cập nhật lại tổng Calo ngày
             updateDailyTotal(dayIndex, cal, 0);
         }
+
+        // === CHANGE MEAL TYPE ===
+        function changeMealType(select) {
+            const slot = select.closest('.meal-slot');
+            const newType = select.value;
+            const oldType = slot.getAttribute('data-meal-type');
+
+            if (newType === oldType) return;
+
+            // Cập nhật data attribute
+            slot.setAttribute('data-meal-type', newType);
+
+            // Tìm section đích (data-type=newType) trong cùng day card
+            const dayCard = slot.closest('.weekly-day-card');
+            const targetContainer = dayCard.querySelector(`.meal-list-container[data-type="${newType}"]`);
+
+            if (targetContainer) {
+                // Di chuyển slot sang section đúng
+                targetContainer.appendChild(slot);
+                ZaderToast.success(`Đã chuyển sang ${select.options[select.selectedIndex].text}`);
+            } else {
+                ZaderToast.warning('Không tìm thấy bữa đích!');
+                // Revert nếu không tìm được
+                slot.setAttribute('data-meal-type', oldType);
+                select.value = oldType;
+            }
+        }
+
+        // === CHANGE SERVING SIZE ===
+        function changeServing(btn, delta) {
+            const slot = btn.closest('.meal-slot');
+            const multiplierInput = slot.querySelector('.input-serving-multiplier');
+            const calInput = slot.querySelector('.input-recipe-cal');
+            const baseCal = parseInt(slot.querySelector('.input-recipe-base-cal')?.value) || parseInt(slot.getAttribute('data-base-cal')) || 0;
+            const servingDisplay = slot.querySelector('.serving-display');
+            const mealCalDisplay = slot.querySelector('.meal-cal');
+            const dayIndex = slot.getAttribute('data-day-index');
+
+            let currentMultiplier = parseFloat(multiplierInput.value) || 1.0;
+            let newMultiplier = Math.round((currentMultiplier + delta) * 10) / 10; // Làm tròn 1 chữ số
+
+            // Giới hạn từ 0.5 đến 5
+            if (newMultiplier < 0.5) {
+                ZaderToast.warning('Tối thiểu là 0.5 phần!');
+                return;
+            }
+            if (newMultiplier > 5) {
+                ZaderToast.warning('Tối đa là 5 phần!');
+                return;
+            }
+
+            const oldCal = parseInt(calInput.value) || 0;
+            const newCal = Math.round(baseCal * newMultiplier);
+
+            // Cập nhật
+            multiplierInput.value = newMultiplier;
+            calInput.value = newCal;
+
+            // Cập nhật hiển thị
+            if (servingDisplay) {
+                servingDisplay.textContent = `×${newMultiplier % 1 === 0 ? newMultiplier.toFixed(0) : newMultiplier}`;
+                // Đổi màu để thấy rõ hơn mặc định
+                servingDisplay.classList.toggle('text-orange-500', newMultiplier !== 1);
+                servingDisplay.classList.toggle('text-primary', newMultiplier === 1);
+            }
+            if (mealCalDisplay) {
+                mealCalDisplay.textContent = `${newCal} kcal`;
+                if (newMultiplier !== 1) {
+                    mealCalDisplay.classList.add('text-orange-500', 'font-bold');
+                    mealCalDisplay.classList.remove('text-gray-400');
+                } else {
+                    mealCalDisplay.classList.remove('text-orange-500', 'font-bold');
+                    mealCalDisplay.classList.add('text-gray-400');
+                }
+            }
+
+            // Cập nhật tổng calo ngày
+            updateDailyTotal(dayIndex, oldCal, newCal);
+        }
+
+        // === CHANGE GRAM (Tính calo theo gram chính xác) ===
+        function changeGram(input) {
+            const slot = input.closest('.meal-slot');
+            const calInput = slot.querySelector('.input-recipe-cal');
+            const baseCal = parseInt(slot.querySelector('.input-recipe-base-cal')?.value) || 0;
+            const servingWeight = parseInt(slot.querySelector('.input-serving-weight')?.value) || 0;
+            const servingDisplay = slot.querySelector('.serving-display');
+            const mealCalDisplay = slot.querySelector('.meal-cal');
+            const dayIndex = slot.getAttribute('data-day-index');
+
+            const newGram = parseInt(input.value) || servingWeight || 100;
+            if (newGram < 10) { input.value = 10; return; }
+            if (newGram > 5000) { input.value = 5000; return; }
+
+            // Tính multiplier: newGram / servingWeight
+            const multiplier = servingWeight > 0 ? newGram / servingWeight : 1;
+            const oldCal = parseInt(calInput.value) || 0;
+            const newCal = Math.round(baseCal * multiplier);
+
+            // Cập nhật hidden inputs
+            calInput.value = newCal;
+            const multiplierInput = slot.querySelector('.input-serving-multiplier');
+            if (multiplierInput) multiplierInput.value = multiplier.toFixed(2);
+
+            // Cập nhật hiển thị
+            const displayMult = Math.round(multiplier * 10) / 10;
+            if (servingDisplay) {
+                servingDisplay.textContent = `×${displayMult % 1 === 0 ? displayMult.toFixed(0) : displayMult}`;
+                servingDisplay.classList.toggle('text-orange-500', Math.abs(multiplier - 1) > 0.05);
+                servingDisplay.classList.toggle('text-primary', Math.abs(multiplier - 1) <= 0.05);
+            }
+            if (mealCalDisplay) {
+                mealCalDisplay.textContent = `${newCal} kcal`;
+                if (Math.abs(multiplier - 1) > 0.05) {
+                    mealCalDisplay.classList.add('text-orange-500', 'font-bold');
+                    mealCalDisplay.classList.remove('text-gray-400');
+                } else {
+                    mealCalDisplay.classList.remove('text-orange-500', 'font-bold');
+                    mealCalDisplay.classList.add('text-gray-400');
+                }
+            }
+
+            updateDailyTotal(dayIndex, oldCal, newCal);
+        }
+
     </script>
     <script th:inline="javascript">
         // 1. Fetch Recipes từ Collection
@@ -481,38 +608,108 @@
 
             // Tắt hiệu ứng overlay
             const overlay = slot.querySelector('.drop-overlay');
-            if (overlay)
-                overlay.classList.add('hidden');
+            if (overlay) overlay.classList.add('hidden');
 
             try {
-                // Lấy dữ liệu từ thẻ được kéo
                 const data = JSON.parse(ev.dataTransfer.getData("text/plain"));
+                const newCal = parseInt(data.calories) || 0;
+                const servingWeightGrams = data.servingWeightGrams || null;
 
-                // Cập nhật UI ngay lập tức
-                slot.querySelector('.meal-name').textContent = data.name;
-                slot.querySelector('.meal-cal').textContent = data.calories + ' kcal';
+                // --- Tên món: chuyển thành link nếu có recipeId ---
+                const mealNameEl = slot.querySelector('.meal-name');
+                if (mealNameEl) {
+                    if (data.recipeId) {
+                        // Thay thế bằng thẻ <a> trỏ đến chi tiết công thức
+                        const link = document.createElement('a');
+                        link.href = `/recipes/detail/${data.recipeId}`;
+                        link.target = '_blank';
+                        link.className = 'text-sm font-bold text-dark-ink line-clamp-1 meal-name flex-1 mr-1 hover:text-primary hover:underline transition-colors';
+                        link.textContent = data.name;
+                        link.title = 'Nhấn để xem chi tiết';
+                        mealNameEl.replaceWith(link);
+                    } else {
+                        mealNameEl.textContent = data.name;
+                    }
+                }
+                const mealCalEl = slot.querySelector('.meal-cal');
+                if (mealCalEl) mealCalEl.textContent = newCal + ' kcal';
 
-                // Cập nhật Hidden Input (Để gửi về server nếu cần save)
-                slot.querySelector('.input-recipe-id').value = data.recipeId;
+                // Hidden inputs
+                slot.querySelector('.input-recipe-id').value = data.recipeId || '';
                 slot.querySelector('.input-recipe-name').value = data.name;
 
-                // Cập nhật Calo cũ -> mới để tính lại tổng ngày
+                slot.setAttribute('data-base-cal', newCal);
+                const baseCalInput = slot.querySelector('.input-recipe-base-cal');
+                if (baseCalInput) baseCalInput.value = newCal;
+
+                const servingWeightInput = slot.querySelector('.input-serving-weight');
+                if (servingWeightInput) servingWeightInput.value = servingWeightGrams || '';
+
+                const multiplierInput = slot.querySelector('.input-serving-multiplier');
+                if (multiplierInput) multiplierInput.value = '1.0';
+
                 const calInput = slot.querySelector('.input-recipe-cal');
                 const oldCal = parseInt(calInput.value) || 0;
-                const newCal = parseInt(data.calories) || 0;
                 calInput.value = newCal;
 
+                // Style card
                 const cardDiv = slot.querySelector('div.flex.flex-col');
                 cardDiv.classList.remove('border-chef-orange', 'bg-chef-orange/5');
                 cardDiv.classList.add('border-nutri-green', 'bg-gray-50');
 
-                const hintText = cardDiv.querySelector('p.text-chef-orange');
-                if (hintText)
-                    hintText.remove();
+                const hintText = cardDiv.querySelector('p.text-chef-orange, p.hint-text');
+                if (hintText) hintText.remove();
 
-                // Tính lại tổng calo của ngày đó
+                // Build controls HTML
+                const currentType = slot.getAttribute('data-meal-type') || 'Breakfast';
+                const mealOptions = [
+                    { value: 'Breakfast', label: '🌅 Sáng' },
+                    { value: 'Snack_Morning', label: '🍪 S.Sáng' },
+                    { value: 'Lunch', label: '🍽️ Trưa' },
+                    { value: 'Snack_Afternoon', label: '🧁 S.Chiều' },
+                    { value: 'Dinner', label: '🌙 Tối' },
+                    { value: 'Snack_Evening', label: '✨ S.Tối' }
+                ];
+                const optionsHtml = mealOptions.map(o =>
+                    `<option value="${o.value}" ${o.value === currentType ? 'selected' : ''}>${o.label}</option>`
+                ).join('');
+
+                // Gram input nếu có servingWeightGrams, ngược lại dùng ± phần
+                const adjustHtml = servingWeightGrams
+                    ? `<div class="flex items-center gap-0.5">
+                           <span class="text-[10px] text-gray-500">⚖️</span>
+                           <input type="number" value="${servingWeightGrams}"
+                               class="gram-input w-14 text-[10px] border border-gray-200 rounded px-1 py-0.5 text-center focus:outline-none focus:ring-1 focus:ring-primary"
+                               min="10" max="5000" step="10" title="Nhập số gram (g)"
+                               onchange="changeGram(this)">
+                           <span class="text-[10px] text-gray-500">g</span>
+                       </div>
+                       <span class="text-[10px] font-bold text-primary min-w-[30px] text-center serving-display">×1</span>`
+                    : `<button type="button" onclick="changeServing(this, -0.5)"
+                           class="w-5 h-5 rounded-full bg-gray-200 hover:bg-red-100 hover:text-red-600 flex items-center justify-center text-gray-600 font-bold transition-colors" title="Giảm ½ phần">
+                           <span class="material-symbols-outlined text-[12px]">remove</span>
+                       </button>
+                       <span class="text-[10px] font-bold text-primary min-w-[30px] text-center serving-display">×1</span>
+                       <button type="button" onclick="changeServing(this, 0.5)"
+                           class="w-5 h-5 rounded-full bg-gray-200 hover:bg-green-100 hover:text-green-600 flex items-center justify-center text-gray-600 font-bold transition-colors" title="Tăng ½ phần">
+                           <span class="material-symbols-outlined text-[12px]">add</span>
+                       </button>`;
+
+                const controlsHtml = `<div class="serving-controls flex items-center gap-1 mt-2 flex-wrap">
+                    <select onchange="changeMealType(this)"
+                        class="text-[10px] border border-gray-200 rounded px-1 py-0.5 text-gray-600 bg-white cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary"
+                        title="Đổi loại bữa">${optionsHtml}</select>
+                    ${adjustHtml}
+                </div>`;
+
+                const existingControls = cardDiv.querySelector('.serving-controls');
+                if (!existingControls) {
+                    cardDiv.insertAdjacentHTML('beforeend', controlsHtml);
+                } else {
+                    existingControls.outerHTML = controlsHtml;
+                }
+
                 updateDailyTotal(slot.dataset.dayIndex, oldCal, newCal);
-
                 ZaderToast.success("Đã cập nhật món ăn!");
 
             } catch (e) {

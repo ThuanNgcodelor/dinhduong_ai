@@ -115,8 +115,14 @@ public class AiFoodService {
             AiRequestLog log = new AiRequestLog();
             log.setUserId(getCurrentUserId());
             log.setRequestType(type);
-            log.setPromptContent(prompt.length() > 2000 ? prompt.substring(0, 2000) + "..." : prompt); // Cắt ngắn nếu quá dài
-            log.setAiResponse(actualResponseContent); // Lưu nội dung trả lời (text)
+            log.setPromptContent(prompt.length() > 2000 ? prompt.substring(0, 2000) + "..." : prompt);
+            
+            // Safety Truncation: Cắt bớt nếu Response quá dài để tránh lỗi Data Truncation
+            // LONGTEXT MySQL hỗ trợ 4GB, nhưng Hibernate/JDBC có thể giới hạn ở mức 65k nếu không cấu hình đúng.
+            if (actualResponseContent.length() > 60000) {
+                actualResponseContent = actualResponseContent.substring(0, 60000) + "... [TRUNCATED]";
+            }
+            log.setAiResponse(actualResponseContent); 
             log.setTokensUsed(tokens);
             log.setCreatedAt(LocalDateTime.now());
 
@@ -224,8 +230,12 @@ public class AiFoodService {
     }
 
     public WeeklyPlanDTO generateWeeklyPlan(int calories, String dietType, String goal) {
+        return generateWeeklyPlan(calories, dietType, goal, null);
+    }
+
+    public WeeklyPlanDTO generateWeeklyPlan(int calories, String dietType, String goal, String foodConstraint) {
         try {
-            // 1. Lấy dữ liệu: Giới hạn 40 món để giảm tải và tránh AI bị "ngáo" vì quá nhiều text
+            // 1. Lấy dữ liệu: Giới hạn 40 món
             List<Recipe> candidates = recipeRepository.findRandomNutritionistRecipes();
             if (candidates.size() > 40) {
                 candidates = candidates.subList(0, 40);
@@ -239,39 +249,46 @@ public class AiFoodService {
             String recipeContext = candidates.stream()
                     .map(r -> String.format("{ID:%d, Name:'%s', Cal:%s}",
                     r.getRecipeId(),
-                    r.getName().replace("'", ""), // Xóa dấu nháy đơn để tránh lỗi JSON
+                    r.getName().replace("'", ""),
                     r.getTotalCalories()))
                     .collect(Collectors.joining(", "));
 
-            // 3. PROMPT (6 bữa/ngày: 3 bữa chính + 3 bữa phụ)
+            // Thêm ràng buộc thực ăn nếu có
+            String constraintText = (foodConstraint != null && !foodConstraint.isBlank())
+                    ? "\nYêu cầu ĐẶC BIỆT của người dùng (bắt buộc tuân thủ): " + foodConstraint + "\n"
+                    : "";
+
+            // 3. PROMPT
             String promptText = String.format(
-                    "Role: Nutritionist API. \n"
-                    + "Context: I have these recipes: [%s].\n"
-                    + "Task: Create a 7-day meal plan (Monday to Sunday) using ONLY the provided recipes.\n"
-                    + "Constraints: \n"
-                    + "1. User Diet: '%s'. Goal: %s.\n"
-                    + "2. CALORIE TARGET: %d kcal/day. Select 6 meals per day:\n"
-                    + "   - Breakfast (~20%% of daily cal)\n"
-                    + "   - Snack_Morning (~10%%)\n"
-                    + "   - Lunch (~30%%)\n"
-                    + "   - Snack_Afternoon (~10%%)\n"
-                    + "   - Dinner (~25%%)\n"
-                    + "   - Snack_Evening (~5%%)\n"
-                    + "   Total must be approximately equal to the daily target (allow +/- 300 kcal).\n"
-                    + "3. OUTPUT FULL JSON ONLY. Do NOT use markdown. Do NOT truncate.\n"
-                    + "4. Ensure the JSON structure is exactly:\n"
+                    "Vai trò: Chuyên gia dinh dưỡng Việt Nam.\n"
+                    + "Ngữ cảnh: Tôi có các công thức sau: [%s].\n"
+                    + "%s"
+                    + "Nhiệm vụ: Lập thực đơn 7 ngày (Thứ 2 đến Chủ Nhật) CHỈ sử dụng các công thức được cung cấp.\n"
+                    + "Ràng buộc:\n"
+                    + "1. Chế độ ăn của người dùng: '%s'. Mục tiêu: %s.\n"
+                    + "2. MỤC TIÊU CALO: %d kcal/ngày. Chọn 6 bữa mỗi ngày:\n"
+                    + "   - Bữa_Sáng (~20%% calo ngày)\n"
+                    + "   - Ăn_Nhẹ_Sáng (~10%%)\n"
+                    + "   - Bữa_Trưa (~30%%)\n"
+                    + "   - Ăn_Nhẹ_Chiều (~10%%)\n"
+                    + "   - Bữa_Tối (~25%%)\n"
+                    + "   - Ăn_Nhẹ_Tối (~5%%)\n"
+                    + "   Tổng calo phải xấp xỉ mục tiêu ngày (cho phép +/- 300 kcal).\n"
+                    + "3. XUẤT TOÀN BỘ JSON. KHÔNG dùng markdown. KHÔNG cắt ngang.\n"
+                    + "4. Cấu trúc JSON phải chính xác như sau:\n"
                     + "{ \"days\": [ \n"
-                    + "  { \"dayName\": \"Monday\", \"totalCalories\": 0, \"meals\": [ \n"
-                    + "    { \"type\": \"Breakfast\", \"recipeId\": 1, \"recipeName\": \"Name\", \"calories\": 0 }, \n"
-                    + "    { \"type\": \"Snack_Morning\", \"recipeId\": 2, \"recipeName\": \"Name\", \"calories\": 0 }, \n"
-                    + "    { \"type\": \"Lunch\", \"recipeId\": 3, \"recipeName\": \"Name\", \"calories\": 0 }, \n"
-                    + "    { \"type\": \"Snack_Afternoon\", \"recipeId\": 4, \"recipeName\": \"Name\", \"calories\": 0 }, \n"
-                    + "    { \"type\": \"Dinner\", \"recipeId\": 5, \"recipeName\": \"Name\", \"calories\": 0 }, \n"
-                    + "    { \"type\": \"Snack_Evening\", \"recipeId\": 6, \"recipeName\": \"Name\", \"calories\": 0 } \n"
+                    + "  { \"dayName\": \"Thứ Hai\", \"totalCalories\": 0, \"meals\": [ \n"
+                    + "    { \"type\": \"Breakfast\", \"recipeId\": 1, \"recipeName\": \"Tên Món\", \"calories\": 0 }, \n"
+                    + "    { \"type\": \"Snack_Morning\", \"recipeId\": 2, \"recipeName\": \"Tên Món\", \"calories\": 0 }, \n"
+                    + "    { \"type\": \"Lunch\", \"recipeId\": 3, \"recipeName\": \"Tên Món\", \"calories\": 0 }, \n"
+                    + "    { \"type\": \"Snack_Afternoon\", \"recipeId\": 4, \"recipeName\": \"Tên Món\", \"calories\": 0 }, \n"
+                    + "    { \"type\": \"Dinner\", \"recipeId\": 5, \"recipeName\": \"Tên Món\", \"calories\": 0 }, \n"
+                    + "    { \"type\": \"Snack_Evening\", \"recipeId\": 6, \"recipeName\": \"Tên Món\", \"calories\": 0 } \n"
                     + "  ] },\n"
-                    + "  ... (Repeat for all 7 days) ... \n"
-                    + "] }",
-                    recipeContext, dietType, goal, calories
+                    + "  ... (Lặp lại cho tất cả 7 ngày) ... \n"
+                    + "] }\n"
+                    + "QUAN TRỌNG: Chỉ xuất JSON hợp lệ. Không dừng cho đến khi hoàn thành cả 7 ngày.",
+                    recipeContext, constraintText, dietType, goal, calories
             );
 
             // 4. Payload
@@ -281,9 +298,9 @@ public class AiFoodService {
             requestBody.put("stream", false);
 
             requestBody.put("options", Map.of(
-                    "num_ctx", 8192, // Bộ nhớ ngữ cảnh tối đa của Llama3 (8k)
-                    "num_predict", -1, // [QUAN TRỌNG] -1 nghĩa là KHÔNG GIỚI HẠN (viết đến khi xong thì thôi)
-                    "temperature", 0.5 // Giữ nguyên để AI bớt sáng tạo linh tinh
+                    "num_ctx", 16384, // Tăng context cho model 120B
+                    "num_predict", 8192, // Tăng lên 8k token để đảm bảo viết hết 7 ngày
+                    "temperature", 0.3 // Giảm sáng tạo để tập trung vào đúng định dạng JSON
             ));
 
             // 5. Gửi Request
@@ -338,6 +355,11 @@ public class AiFoodService {
                                 int realTotal = 0;
                                 for (WeeklyPlanDTO.Meal meal : day.meals) {
                                     realTotal += meal.calories;
+                                    if (meal.recipeId != null) {
+                                        recipeRepository.findById(meal.recipeId).ifPresent(r -> {
+                                            meal.servingWeightGrams = r.getServingWeightGrams();
+                                        });
+                                    }
                                 }
                                 day.totalCalories = realTotal;
                             }
@@ -357,30 +379,30 @@ public class AiFoodService {
 
     public List<PantryRecipeMatchDTO> generateRecipesFromPantry(String ingredientsList, String userProfileInfo) {
         try {
-            // --- PROMPT ĐƯỢC NÂNG CẤP ---
+            // --- PROMPT ĐÃ CẬP NHẬT: BẮT BUỘC TIẾNG VIỆT, PHÙ HỢP VỚI THỊ TRƯỜNG VIỆT NAM ---
             String promptText = String.format(
-                    "Role: Professional Chef & Nutritionist.\n"
-                    + "Input: User's Pantry: [%s]. User Profile: %s.\n"
-                    + "Task: Create EXACTLY 3 to 4 unique recipes.\n"
-                    + "Constraints:\n"
-                    + "1. OUTPUT RAW JSON ARRAY ONLY. NO Intro text. NO Note at the end. NO Markdown (```json).\n"
-                    + // Nhấn mạnh RAW JSON
-                    "2. Structure must be a SINGLE Array of Objects: [ { ... }, { ... } ]\n"
-                    + // Nhấn mạnh Single Array
-                    "3. Required Fields: name, description, ingredientsList, stepsList, timeMin, calories, servings, matchPercentage, missingCount.\n"
-                    + "Output Structure:\n"
+                    "Vai trò: Đầu bếp và Chuyên gia dinh dưỡng Việt Nam chuyên nghiệp.\n"
+                    + "Đầu vào: Tủ lạnh của người dùng: [%s]. Hồ sơ người dùng: %s.\n"
+                    + "Nhiệm vụ: Tạo ĐÚNG 3 đến 4 công thức nấu ăn độc đáo, phù hợp với khẩu vị và thị trường Việt Nam.\n"
+                    + "Ưu tiên các món ăn quen thuộc như: Cơm, Phở, Bún, Canh, Xào, Kho, Hấp, Lẩu v.v.\n"
+                    + "Ràng buộc:\n"
+                    + "1. TOÀN BỘ NỘI DUNG PHẢI BẰNG TIẾNG VIỆT (tên món, mô tả, nguyên liệu, các bước thực hiện).\n"
+                    + "2. XUẤT MẢNG JSON THUẦN TÚY. KHÔNG có văn bản giới thiệu. KHÔNG có ghi chú. KHÔNG Markdown (```json).\n"
+                    + "3. Cấu trúc phải là một Mảng đơn các Object: [ { ... }, { ... } ]\n"
+                    + "4. Các trường bắt buộc: name, description, ingredientsList, stepsList, timeMin, calories, servings, matchPercentage, missingCount.\n"
+                    + "Cấu trúc đầu ra:\n"
                     + "[ \n"
                     + "  { \n"
-                    + "    \"name\": \"Dish Name\", \n"
-                    + "    \"description\": \"Short appetizing description\", \n"
+                    + "    \"name\": \"Tên Món Ăn Tiếng Việt\", \n"
+                    + "    \"description\": \"Mô tả ngắn gọn, hấp dẫn bằng tiếng Việt\", \n"
                     + "    \"timeMin\": 30, \n"
                     + "    \"calories\": 450, \n"
                     + "    \"servings\": 2, \n"
-                    + "    \"ingredientsList\": [\"2 Eggs\", \"1 tbsp Oil\"], \n"
-                    + "    \"stepsList\": [\"Step 1: Crack eggs\", \"Step 2: Fry\"], \n"
+                    + "    \"ingredientsList\": [\"2 quả Trứng\", \"1 muỗng canh Dầu ăn\"], \n"
+                    + "    \"stepsList\": [\"Bước 1: Đập trứng vào bát\", \"Bước 2: Chiên đều\"], \n"
                     + "    \"matchPercentage\": 90, \n"
                     + "    \"missingCount\": 0, \n"
-                    + "    \"imageUrl\": \"https://placehold.co/300?text=AI+Food\" \n"
+                    + "    \"imageUrl\": \"https://placehold.co/300?text=Mon+An+VN\" \n"
                     + "  } \n"
                     + "]",
                     ingredientsList, userProfileInfo
@@ -474,12 +496,7 @@ public class AiFoodService {
             imageUrl = fileStorageService.storeBase64(imageUrl);
         }
 
-        // Xử lý Macros: "18g" -> 18.0
-        BigDecimal protein = parseMacro(aiData.getProtein());
-        BigDecimal carbs = parseMacro(aiData.getCarbs());
-        BigDecimal fat = parseMacro(aiData.getFat());
-
-        // Gộp mảng thành chuỗi
+        // 2. LƯU VÀO BẢNG AiSavedRecipes
         String ingText = String.join("\n", aiData.getIngredients());
         String stepText = String.join("\n", aiData.getInstructions());
 
@@ -531,26 +548,15 @@ public class AiFoodService {
         }
     }
 
-    // Hàm phụ trợ parse "18g" -> 18.0
-    private BigDecimal parseMacro(String val) {
-        if (val == null) {
-            return BigDecimal.ZERO;
-        }
-        try {
-            return new BigDecimal(val.replaceAll("[^0-9.]", ""));
-        } catch (Exception e) {
-            return BigDecimal.ZERO;
-        }
-    }
 
     /**
      * Chạy AI trong nền (thread pool) – không bị Cloudflare timeout.
      * Spring sẽ tự quản lý thread, cần @EnableAsync trong @SpringBootApplication.
      */
     @Async
-    public void generateWeeklyPlanAsync(String jobId, int calories, String dietType, String goal) {
+    public void generateWeeklyPlanAsync(String jobId, int calories, String dietType, String goal, String foodConstraint) {
         try {
-            WeeklyPlanDTO plan = generateWeeklyPlan(calories, dietType, goal);
+            WeeklyPlanDTO plan = generateWeeklyPlan(calories, dietType, goal, foodConstraint);
             if (plan != null) {
                 asyncJobService.completeJob(jobId, plan);
             } else {

@@ -1,7 +1,8 @@
 package com.david.NUTRITION_TRACNKER.dto;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 public class WeeklyPlanDTO {
 
@@ -30,5 +31,6 @@ public class WeeklyPlanDTO {
         public Integer recipeId;
         public String recipeName;
         public int calories;
+        public Integer servingWeightGrams;
     }
 }

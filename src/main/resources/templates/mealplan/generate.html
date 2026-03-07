@@ -142,6 +142,85 @@
                                 class="form-input-field w-full md:w-1/2 rounded-lg border-[#e7ddda] dark:bg-[#23140f] h-14 px-4 text-[#181210] dark:text-white focus:ring-primary focus:border-primary shadow-sm font-medium">
                         </label>
 
+                        <!-- ===== PANEL: Chọn Món Ăn Tùy Chỉnh ===== -->
+                        <div
+                            class="rounded-xl border border-orange-200 dark:border-orange-800/40 bg-orange-50/30 dark:bg-orange-900/5 overflow-hidden">
+                            <button type="button" onclick="togglePickerPanel()"
+                                class="w-full flex items-center justify-between px-5 py-4 text-left group">
+                                <div class="flex items-center gap-3">
+                                    <div class="p-2 bg-orange-100 dark:bg-orange-900/20 rounded-lg">
+                                        <span class="material-symbols-outlined text-primary">tune</span>
+                                    </div>
+                                    <div>
+                                        <p class="font-bold text-dark-ink dark:text-white text-sm">🎯 Tùy chỉnh Món Ăn
+                                        </p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Cho AI biết bạn muốn
+                                            ăn gì hoặc chọn sẵn công thức</p>
+                                    </div>
+                                </div>
+                                <span id="pickerChevron"
+                                    class="material-symbols-outlined text-gray-400 transition-transform duration-200">expand_more</span>
+                            </button>
+
+                            <div id="pickerPanel"
+                                class="hidden border-t border-orange-100 dark:border-orange-800/30 px-5 py-5 flex flex-col gap-5">
+
+                                <!-- Mô tả bằng ngôn ngữ tự nhiên cho AI -->
+                                <div>
+                                    <label
+                                        class="flex items-center gap-2 text-sm font-bold text-dark-ink dark:text-white mb-2">
+                                        <span class="material-symbols-outlined text-base text-primary">smart_toy</span>
+                                        Nói với AI bạn muốn ăn gì (tùy chọn)
+                                    </label>
+                                    <textarea id="foodConstraintText" name="foodConstraint" rows="2"
+                                        class="w-full rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-800 dark:text-white px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+                                        placeholder='VD: "Tôi chỉ muốn ăn bún gạo lức và ức gà" hoặc "Không ăn hải sản, ưu tiên rau củ"'></textarea>
+                                </div>
+
+                                <!-- Chọn Recipe cụ thể -->
+                                <div>
+                                    <div class="flex items-center justify-between mb-2">
+                                        <label
+                                            class="flex items-center gap-2 text-sm font-bold text-dark-ink dark:text-white">
+                                            <span
+                                                class="material-symbols-outlined text-base text-primary">restaurant</span>
+                                            Hoặc chọn công thức cụ thể
+                                            <span id="selectedCount"
+                                                class="text-xs font-medium text-primary bg-orange-100 dark:bg-orange-900/20 px-2 py-0.5 rounded-full hidden">0
+                                                đã chọn</span>
+                                        </label>
+                                        <button type="button" onclick="clearRecipeSelection()"
+                                            class="text-xs text-gray-400 hover:text-red-500 transition-colors hidden"
+                                            id="clearSelBtn">Xóa tất cả</button>
+                                    </div>
+
+                                    <div class="relative mb-2">
+                                        <span
+                                            class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">search</span>
+                                        <input type="text" id="recipeSearchInput" oninput="filterRecipes(this.value)"
+                                            placeholder="Tìm công thức..."
+                                            class="w-full pl-9 pr-4 py-2 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-800 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+                                    </div>
+
+                                    <div id="recipePickerList"
+                                        class="max-h-52 overflow-y-auto custom-scroll flex flex-col gap-1 border border-gray-200 dark:border-gray-700 rounded-lg p-2 bg-white dark:bg-gray-900">
+                                        <p class="text-sm text-gray-400 text-center py-4">
+                                            <span
+                                                class="material-symbols-outlined animate-spin text-base">hourglass_top</span>
+                                            Đang tải...
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <p
+                                    class="text-xs text-gray-500 dark:text-gray-400 border-t border-dashed border-gray-200 dark:border-gray-700 pt-3">
+                                    💡 <strong>Gợi ý:</strong> Khi chọn công thức → hệ thống tự phân bổ 7 ngày từ các
+                                    món đó. Khi chỉ nhập mô tả → AI sẽ tạo thực đơn tuân theo yêu cầu của bạn.
+                                </p>
+                            </div>
+                        </div>
+                        <!-- ===== END PANEL ===== -->
+
                         <div id="ai-loading-alert"
                             class="hidden p-4 text-sm text-blue-800 border border-blue-200 rounded-lg bg-blue-50 dark:bg-gray-800 dark:text-blue-400 dark:border-blue-900"
                             role="alert">
@@ -331,29 +410,150 @@
         let pollIntervalId = null;
         let elapsedSeconds = 0;
         let timerIntervalId = null;
+        let allRecipes = [];
+        let selectedRecipeIds = new Set();
 
         document.addEventListener('DOMContentLoaded', function () {
+            // Set ngày mặc định = ngày mai
             const dateInput = document.getElementById('startDateInput');
             const tomorrow = new Date();
             tomorrow.setDate(tomorrow.getDate() + 1);
             dateInput.value = tomorrow.toISOString().split('T')[0];
+
+            // Tải danh sách recipe
+            loadAllRecipes();
         });
 
+        // ===== Recipe Picker =====
+        async function loadAllRecipes() {
+            try {
+                const res = await fetch('/recipes/all-mini');
+                allRecipes = await res.json();
+                renderRecipeList(allRecipes);
+            } catch (e) {
+                document.getElementById('recipePickerList').innerHTML =
+                    '<p class="text-xs text-red-400 text-center py-3">Không thể tải danh sách công thức.</p>';
+            }
+        }
+
+        function renderRecipeList(recipes) {
+            const list = document.getElementById('recipePickerList');
+            if (!recipes || recipes.length === 0) {
+                list.innerHTML = '<p class="text-xs text-gray-400 text-center py-4">Không có công thức nào.</p>';
+                return;
+            }
+            list.innerHTML = recipes.map(r => `
+                <label class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-orange-50 dark:hover:bg-orange-900/10 cursor-pointer transition-colors border border-transparent hover:border-orange-100 dark:hover:border-orange-800/30 ${selectedRecipeIds.has(r.recipeId) ? 'bg-orange-50 dark:bg-orange-900/10 border-orange-200 dark:border-orange-800/30' : ''}">
+                    <input type="checkbox" value="${r.recipeId}"
+                        ${selectedRecipeIds.has(r.recipeId) ? 'checked' : ''}
+                        onchange="toggleRecipe(${r.recipeId}, this.checked)"
+                        class="w-4 h-4 rounded text-primary accent-orange-500 cursor-pointer shrink-0">
+                    <img src="${r.image}" onerror="this.onerror=null; this.src='https://placehold.co/200x200/ffbf00/ffffff?text=Food'"
+                        class="w-8 h-8 rounded-full object-cover shrink-0 border border-gray-100">
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-dark-ink dark:text-gray-200 truncate">${r.name}</p>
+                        <p class="text-xs text-gray-400">${r.calories || 0} kcal${r.servingWeightGrams ? ' · ' + r.servingWeightGrams + 'g/phần' : ''}</p>
+                    </div>
+                </label>
+            `).join('');
+        }
+
+        function filterRecipes(keyword) {
+            const kw = keyword.toLowerCase().trim();
+            const filtered = kw ? allRecipes.filter(r => r.name.toLowerCase().includes(kw)) : allRecipes;
+            renderRecipeList(filtered);
+        }
+
+        function toggleRecipe(recipeId, checked) {
+            if (checked) {
+                selectedRecipeIds.add(recipeId);
+            } else {
+                selectedRecipeIds.delete(recipeId);
+            }
+            updateSelectionUI();
+        }
+
+        function clearRecipeSelection() {
+            selectedRecipeIds.clear();
+            renderRecipeList(allRecipes);
+            updateSelectionUI();
+        }
+
+        function updateSelectionUI() {
+            const count = selectedRecipeIds.size;
+            const badge = document.getElementById('selectedCount');
+            const clearBtn = document.getElementById('clearSelBtn');
+            if (count > 0) {
+                badge.textContent = count + ' đã chọn';
+                badge.classList.remove('hidden');
+                clearBtn.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+                clearBtn.classList.add('hidden');
+            }
+        }
+
+        function togglePickerPanel() {
+            const panel = document.getElementById('pickerPanel');
+            const chevron = document.getElementById('pickerChevron');
+            const isHidden = panel.classList.contains('hidden');
+            panel.classList.toggle('hidden', !isHidden);
+            if (isHidden) {
+                panel.classList.add('flex');
+                chevron.style.transform = 'rotate(180deg)';
+            } else {
+                panel.classList.remove('flex');
+                chevron.style.transform = '';
+            }
+        }
+
+        // ===== Generate Logic =====
         async function handleGenerate(event) {
             event.preventDefault();
             const form = document.getElementById('generateForm');
             const formData = new FormData(form);
             const startDateStr = document.getElementById('startDateInput').value;
+            const constraint = document.getElementById('foodConstraintText')?.value?.trim() || '';
+            const recipeIds = Array.from(selectedRecipeIds);
 
-            toggleLoadingState(true);
+            // === HƯỚNG 2: Chọn Recipe cụ thể → phân bổ ngay (không cần AI) ===
+            if (recipeIds.length > 0) {
+                toggleLoadingState(true, '🍽️ Đang phân bổ thực đơn...');
+                try {
+                    const params = new URLSearchParams({
+                        startDateStr: startDateStr,
+                        calories: formData.get('calories') || '2000',
+                    });
+                    recipeIds.forEach(id => params.append('recipeIds', id));
+
+                    const res = await fetch('/api/meal-plan/generate-with-recipes?' + params.toString(), {
+                        method: 'POST'
+                    });
+                    const data = await res.json();
+                    if (data.redirectUrl) {
+                        ZaderToast.success('Đã tạo kế hoạch từ công thức đã chọn!');
+                        setTimeout(() => window.location.href = data.redirectUrl, 500);
+                    } else {
+                        ZaderToast.error(data.message || 'Có lỗi xảy ra');
+                        toggleLoadingState(false);
+                    }
+                } catch (e) {
+                    ZaderToast.error('Không thể tạo kế hoạch. Thử lại sau.');
+                    toggleLoadingState(false);
+                }
+                return;
+            }
+
+            // === HƯỚNG 1: AI với constraint text (hoặc AI thuần) ===
+            toggleLoadingState(true, 'Đang Nấu...');
             elapsedSeconds = 0;
             startTimer();
 
-            // Bước 1: Submit job – trả về jobId ngay lập tức (< 1 giây)
             const submitParams = new URLSearchParams({
                 calories: formData.get('calories') || '2000',
                 dietType: formData.get('dietType') || '',
-                goal: formData.get('goal') || 'MAINTENANCE'
+                goal: formData.get('goal') || 'MAINTENANCE',
+                foodConstraint: constraint   // Gửi constraint cho AI
             });
 
             let jobId;
@@ -368,7 +568,7 @@
                 return;
             }
 
-            // Bước 2: Poll trạng thái mỗi 5 giây cho đến khi AI xong
+            // Poll kết quả
             pollIntervalId = setInterval(async () => {
                 try {
                     const statusUrl = `/api/meal-plan/status/${jobId}?startDateStr=${encodeURIComponent(startDateStr)}`;
@@ -386,7 +586,6 @@
                         ZaderToast.error(data.message || 'Tạo kế hoạch thất bại');
                         toggleLoadingState(false);
                     }
-                    // Nếu PENDING thì tiếp tục chờ
                 } catch (e) {
                     clearInterval(pollIntervalId);
                     stopTimer();
@@ -418,7 +617,7 @@
             toggleLoadingState(false);
         }
 
-        function toggleLoadingState(isLoading) {
+        function toggleLoadingState(isLoading, loadingText = 'Đang Nấu...') {
             const btnGenerate = document.getElementById('btnGenerate');
             const iconGenerate = document.getElementById('iconGenerate');
             const textGenerate = document.getElementById('textGenerate');
@@ -433,7 +632,7 @@
                 btnGenerate.disabled = true;
                 btnGenerate.classList.add('cursor-not-allowed', 'opacity-80');
                 iconGenerate.classList.add('hidden');
-                textGenerate.innerText = 'Đang Nấu...';
+                textGenerate.innerText = loadingText;
                 spinner.classList.remove('hidden');
                 btnArrange.classList.add('hidden');
                 btnCancel.classList.remove('hidden');

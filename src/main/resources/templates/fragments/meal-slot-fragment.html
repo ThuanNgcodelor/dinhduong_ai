@@ -1,35 +1,108 @@
-<th:block th:fragment="mealSlotFragment(meal, dayIndex)">
-    <div class="meal-slot relative group transition-all mt-1" th:data-day-index="${dayIndex}"
-        th:data-meal-type="${meal?.type}" ondragover="allowDrop(event)" ondrop="drop(event)">
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
 
-        <input type="hidden" class="input-meal-item-id" th:value="${meal?.mealItemId}">
-        <input type="hidden" class="input-recipe-id" th:value="${meal?.recipeId}">
+<body>
+    <th:block th:fragment="mealSlotFragment(meal, dayIndex)">
+        <div class="meal-slot relative group transition-all mt-1" th:data-day-index="${dayIndex}"
+            th:data-meal-type="${meal?.type}" th:data-base-cal="${meal?.calories}" th:data-recipe-id="${meal?.recipeId}"
+            th:data-serving-weight="${meal?.servingWeightGrams}" ondragover="allowDrop(event)" ondrop="drop(event)">
 
-        <button onclick="removeMealSlot(this)" type="button"
-            class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-20 shadow-sm cursor-pointer">
-            <span class="material-symbols-outlined text-[12px]">close</span>
-        </button>
-
-        <div th:classappend="${meal?.recipeId == null} ? 'border-chef-orange bg-chef-orange/5' : 'border-nutri-green bg-gray-50'"
-            class="flex flex-col justify-center min-h-[60px] rounded-lg border-2 border-dashed p-2 hover:border-primary cursor-pointer transition-colors relative z-10">
-
-            <div class="flex justify-between items-start pointer-events-none">
-                <p class="text-sm font-bold text-dark-ink line-clamp-1 meal-name" th:text="${meal?.recipeName}">Tên công
-                    thức</p>
-                <span class="text-[10px] text-gray-400 meal-cal" th:text="${meal?.calories + ' kcal'}"></span>
-            </div>
-
-            <p th:if="${meal?.recipeId == null}"
-                class="text-xs text-chef-orange mt-1 italic hint-text pointer-events-none">Kéo công thức vào đây</p>
-
+            <input type="hidden" class="input-meal-item-id" th:value="${meal?.mealItemId}">
             <input type="hidden" class="input-recipe-id" th:value="${meal?.recipeId}">
             <input type="hidden" class="input-recipe-name" th:value="${meal?.recipeName}">
+            <input type="hidden" class="input-recipe-base-cal" th:value="${meal?.calories}">
             <input type="hidden" class="input-recipe-cal" th:value="${meal?.calories}">
-        </div>
+            <input type="hidden" class="input-serving-multiplier" value="1.0">
+            <!-- Lưu trọng lượng/phần (gram) để tính khi nhập gram tùy ý -->
+            <input type="hidden" class="input-serving-weight" th:value="${meal?.servingWeightGrams}">
 
-        <div
-            class="absolute inset-0 bg-primary/10 border-2 border-primary border-dashed rounded-lg hidden pointer-events-none drop-overlay flex items-center justify-center z-30">
-            <span class="text-primary font-bold text-sm">Thả để thay thế</span>
+            <!-- Nút Xóa -->
+            <button onclick="removeMealSlot(this)" type="button"
+                class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-20 shadow-sm cursor-pointer">
+                <span class="material-symbols-outlined text-[12px]">close</span>
+            </button>
+
+            <!-- Card chính -->
+            <div th:classappend="${meal?.recipeId == null} ? 'border-chef-orange bg-chef-orange/5' : 'border-nutri-green bg-gray-50'"
+                class="flex flex-col justify-center min-h-[60px] rounded-lg border-2 border-dashed p-2 hover:border-primary transition-colors relative z-10">
+
+                <!-- Tên món - Click để xem chi tiết (nếu có recipeId) -->
+                <div class="flex justify-between items-start">
+                    <a th:if="${meal?.recipeId != null}" th:href="@{/recipes/detail/{id}(id=${meal?.recipeId})}"
+                        target="_blank"
+                        class="text-sm font-bold text-dark-ink line-clamp-1 meal-name hover:text-primary hover:underline transition-colors flex-1 mr-1"
+                        th:text="${meal?.recipeName}" title="Nhấn để xem chi tiết">Tên công thức</a>
+                    <p th:if="${meal?.recipeId == null}"
+                        class="text-sm font-bold text-dark-ink line-clamp-1 meal-name flex-1 mr-1"
+                        th:text="${meal?.recipeName}">Tên công thức</p>
+                    <span class="text-[10px] text-gray-400 meal-cal whitespace-nowrap"
+                        th:text="${meal?.calories + ' kcal'}"></span>
+                </div>
+
+                <p th:if="${meal?.recipeId == null}" class="text-xs text-chef-orange mt-1 italic hint-text">Kéo công
+                    thức vào đây</p>
+
+                <!-- Controls: Đổi bữa + Điều chỉnh (chỉ hiện khi có recipeId) -->
+                <div th:if="${meal?.recipeId != null}" class="flex items-center gap-1 mt-2 flex-wrap">
+
+                    <!-- Dropdown đổi loại bữa -->
+                    <select onchange="changeMealType(this)"
+                        class="text-[10px] border border-gray-200 rounded px-1 py-0.5 text-gray-600 bg-white cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary"
+                        title="Đổi loại bữa">
+                        <option th:selected="${meal?.type == 'Breakfast' or meal?.type == 'BREAKFAST'}"
+                            value="Breakfast">🌅 Sáng</option>
+                        <option th:selected="${meal?.type == 'Snack_Morning' or meal?.type == 'SNACK_MORNING'}"
+                            value="Snack_Morning">🍪 S.Sáng</option>
+                        <option th:selected="${meal?.type == 'Lunch' or meal?.type == 'LUNCH'}" value="Lunch">🍽️ Trưa
+                        </option>
+                        <option th:selected="${meal?.type == 'Snack_Afternoon' or meal?.type == 'SNACK_AFTERNOON'}"
+                            value="Snack_Afternoon">🧁 S.Chiều</option>
+                        <option th:selected="${meal?.type == 'Dinner' or meal?.type == 'DINNER'}" value="Dinner">🌙 Tối
+                        </option>
+                        <option th:selected="${meal?.type == 'Snack_Evening' or meal?.type == 'SNACK_EVENING'}"
+                            value="Snack_Evening">✨ S.Tối</option>
+                    </select>
+
+                    <!-- Nếu có servingWeightGrams: Hiện input gram, không thì dùng ±phần -->
+                    <th:block th:if="${meal?.servingWeightGrams != null}">
+                        <!-- Input gram tùy ý -->
+                        <div class="flex items-center gap-0.5">
+                            <span class="text-[10px] text-gray-500">⚖️</span>
+                            <input type="number" th:value="${meal?.servingWeightGrams}"
+                                class="gram-input w-14 text-[10px] border border-gray-200 rounded px-1 py-0.5 text-center focus:outline-none focus:ring-1 focus:ring-primary"
+                                min="10" max="2000" step="10" title="Nhập số gram" onchange="changeGram(this)"
+                                placeholder="g">
+                            <span class="text-[10px] text-gray-500">g</span>
+                        </div>
+                        <span
+                            class="text-[10px] font-bold text-primary min-w-[30px] text-center serving-display">×1</span>
+                    </th:block>
+
+                    <th:block th:if="${meal?.servingWeightGrams == null}">
+                        <!-- Nút ±  phần ăn (fallback khi không có gram) -->
+                        <button type="button" onclick="changeServing(this, -0.5)"
+                            class="w-5 h-5 rounded-full bg-gray-200 hover:bg-red-100 hover:text-red-600 flex items-center justify-center text-gray-600 font-bold transition-colors"
+                            title="Giảm ½ phần">
+                            <span class="material-symbols-outlined text-[12px]">remove</span>
+                        </button>
+                        <span
+                            class="text-[10px] font-bold text-primary min-w-[30px] text-center serving-display">×1</span>
+                        <button type="button" onclick="changeServing(this, 0.5)"
+                            class="w-5 h-5 rounded-full bg-gray-200 hover:bg-green-100 hover:text-green-600 flex items-center justify-center text-gray-600 font-bold transition-colors"
+                            title="Tăng ½ phần">
+                            <span class="material-symbols-outlined text-[12px]">add</span>
+                        </button>
+                    </th:block>
+                </div>
+            </div>
+
+            <!-- Drop Overlay -->
+            <div
+                class="absolute inset-0 bg-primary/10 border-2 border-primary border-dashed rounded-lg hidden pointer-events-none drop-overlay flex items-center justify-center z-30">
+                <span class="text-primary font-bold text-sm">Thả để thay thế</span>
+            </div>
         </div>
-    </div>
-</th:block>
+    </th:block>
+</body>
+
+</html>

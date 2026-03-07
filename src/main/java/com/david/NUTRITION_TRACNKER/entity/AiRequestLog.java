@@ -1,9 +1,19 @@
 package com.david.NUTRITION_TRACNKER.entity;
 
-import jakarta.persistence.*;
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import lombok.*;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Lob;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
@@ -27,6 +37,7 @@ public class AiRequestLog implements Serializable {
     @Column(name = "PromptContent")
     private String promptContent;
 
+    @Lob
     @Column(name = "AiResponse", columnDefinition = "LONGTEXT")
     private String aiResponse;
 

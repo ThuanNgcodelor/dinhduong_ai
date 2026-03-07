@@ -65,6 +65,11 @@ public class Recipe implements Serializable {
     @Column(name = "TotalCalories")
     private BigDecimal totalCalories;
 
+    // Khối lượng 1 phần ăn tính theo gram (VD: 1 phần = 200g)
+    // Dùng để tính calo khi người dùng nhập gram tùy ý (VD: 400g = 2 × calo/phần)
+    @Column(name = "ServingWeightGrams")
+    private Integer servingWeightGrams;
+
     @Column(name = "ImageUrl")
     private String imageUrl;
     

@@ -62,7 +62,7 @@ public class MealItem implements Serializable {
     @Column(name = "ImageUrl")
     private String imageUrl;
 
-    @Column(name = "MealTimeType")
+    @Column(name = "MealTimeType", length = 50)
     @Enumerated(EnumType.STRING)
     private MealType mealTimeType;
 
