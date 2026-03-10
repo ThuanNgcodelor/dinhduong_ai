@@ -5,7 +5,8 @@
     <th:block th:fragment="mealSlotFragment(meal, dayIndex)">
         <div class="meal-slot relative group transition-all mt-1" th:data-day-index="${dayIndex}"
             th:data-meal-type="${meal?.type}" th:data-base-cal="${meal?.calories}" th:data-recipe-id="${meal?.recipeId}"
-            th:data-serving-weight="${meal?.servingWeightGrams}" ondragover="allowDrop(event)" ondrop="drop(event)">
+            th:data-serving-weight="${meal?.servingWeightGrams}" ondragover="allowDrop(event)" ondrop="drop(event)"
+            onclick="handleSlotClick(this)">
 
             <input type="hidden" class="input-meal-item-id" th:value="${meal?.mealItemId}">
             <input type="hidden" class="input-recipe-id" th:value="${meal?.recipeId}">

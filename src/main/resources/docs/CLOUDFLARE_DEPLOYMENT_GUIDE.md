@@ -1,6 +1,15 @@
 po# Hướng Dẫn Deploy Dự Án Spring Boot Với Cloudflare Tunnel
 set OLLAMA_HOST=0.0.0.0
 ollama serve
+
+
+mvn clean package -DskipTests
+java -jar target/NUTRITION_TRACNKER-0.0.1-SNAPSHOT.jar
+
+
+cloudflared tunnel --config d:\Spring\NUTRITION_TRACKER\src\main\resources\docs\cloudflared-config.yml run dinhduongcantho
+
+
 Tài liệu này hướng dẫn cách đưa ứng dụng Spring Boot chạy trên `localhost:8080` lên mạng internet thông qua tên miền `dinhduongcantho.io.vn` sử dụng công cụ Cloudflared (Tunnel).
 
 ---

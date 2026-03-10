@@ -3,6 +3,27 @@
 
 <head th:replace="~{fragments/head :: common-head}">
     <title>Tùy Chỉnh Kế Hoạch Bữa Ăn</title>
+    <!-- Mobile Drag Drop Polyfill -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/mobile-drag-drop@3.0.0-rc.0/default.css">
+    <script src="https://cdn.jsdelivr.net/npm/mobile-drag-drop@3.0.0-rc.0/index.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mobile-drag-drop@3.0.0-rc.0/scroll-behaviour.min.js"></script>
+    <style>
+        .recipe-selected {
+            border-color: #ff6b00 !important;
+            background-color: #fff5ed !important;
+            box-shadow: 0 0 0 2px #ff6b00 !important;
+        }
+        .slot-highlight {
+            border-color: #ff6b00 !important;
+            background-color: #fff5ed !important;
+            animation: pulse-border 1.5s infinite;
+        }
+        @keyframes pulse-border {
+            0% { border-color: #ff6b00; }
+            50% { border-color: #ffaf7a; }
+            100% { border-color: #ff6b00; }
+        }
+    </style>
 </head>
 
 <body class="flex flex-col min-h-screen bg-smart-white dark:bg-background-dark font-display">
@@ -324,7 +345,59 @@
                 document.body.style.overflow = 'hidden';
                 document.body.style.height = '100vh';
             }
+
+            // Init Mobile Drag Drop Polyfill
+            MobileDragDrop.polyfill({
+                dragImageTranslateOverride: MobileDragDrop.scrollBehaviourDragImageTranslateOverride
+            });
         });
+
+        // --- CLICK TO ADD LOGIC (MOBILE FALLBACK) ---
+        let selectedRecipe = null;
+
+        function handleRecipeClick(element, recipe) {
+            // Clear previous selection
+            document.querySelectorAll('.recipe-card-source').forEach(el => el.classList.remove('recipe-selected'));
+            
+            if (selectedRecipe && selectedRecipe.recipeId === recipe.recipeId) {
+                selectedRecipe = null;
+                document.querySelectorAll('.meal-slot').forEach(el => el.classList.remove('slot-highlight'));
+                return;
+            }
+
+            selectedRecipe = recipe;
+            element.classList.add('recipe-selected');
+            
+            // Highlight empty slots
+            document.querySelectorAll('.meal-slot').forEach(el => {
+                const recipeId = el.querySelector('.input-recipe-id').value;
+                if (!recipeId) {
+                    el.classList.add('slot-highlight');
+                }
+            });
+
+            ZaderToast.info("Đã chọn: " + recipe.name + ". Nhấn vào ô bữa ăn để thêm.");
+        }
+
+        function handleSlotClick(element) {
+            if (!selectedRecipe) return;
+
+            // Trigger drop logic manually
+            const fakeEvent = {
+                preventDefault: () => {},
+                currentTarget: element,
+                dataTransfer: {
+                    getData: () => JSON.stringify(selectedRecipe)
+                }
+            };
+            
+            drop(fakeEvent);
+
+            // Cleanup
+            selectedRecipe = null;
+            document.querySelectorAll('.recipe-card-source').forEach(el => el.classList.remove('recipe-selected'));
+            document.querySelectorAll('.meal-slot').forEach(el => el.classList.remove('slot-highlight'));
+        }
     </script>
     <script>
         // Hàm thêm slot mới
@@ -354,6 +427,7 @@
             newSlot.setAttribute('data-base-cal', '0');
             newSlot.setAttribute('ondragover', 'allowDrop(event)');
             newSlot.setAttribute('ondrop', 'drop(event)');
+            newSlot.setAttribute('onclick', 'handleSlotClick(this)');
 
             newSlot.innerHTML = `
              <input type="hidden" class="input-meal-item-id" value="">
@@ -547,11 +621,17 @@
                 // Render Draggable Cards
                 recipes.forEach(r => {
                     const card = document.createElement('div');
-                    card.className = "flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-lg cursor-grab hover:shadow-md transition-all active:cursor-grabbing";
+                    card.className = "recipe-card-source flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-lg cursor-grab hover:shadow-md transition-all active:cursor-grabbing";
                     card.draggable = true;
 
                     // Gắn data cho sự kiện drag
                     card.ondragstart = (e) => drag(e, r);
+                    // Click to select
+                    card.onclick = (e) => {
+                        if (e.target.tagName !== 'IMG' && e.target.tagName !== 'SPAN' && !e.target.onclick) {
+                            handleRecipeClick(card, r);
+                        }
+                    };
 
                     card.innerHTML = `
                     <img src="${r.image}" 
@@ -884,11 +964,17 @@
                 const card = document.createElement('div');
 
                 // --- Style & Drag Attributes ---
-                card.className = "relative flex items-center gap-3 p-2 bg-white border border-gray-200 rounded-lg cursor-grab hover:shadow-sm transition-all active:cursor-grabbing group";
+                card.className = "recipe-card-source relative flex items-center gap-3 p-2 bg-white border border-gray-200 rounded-lg cursor-grab hover:shadow-sm transition-all active:cursor-grabbing group";
                 card.draggable = true;
 
                 // Attach Drag Event
                 card.ondragstart = (e) => drag(e, r);
+                // Click to select
+                card.onclick = (e) => {
+                    if (e.target.tagName !== 'IMG' && e.target.tagName !== 'SPAN' && !e.target.onclick) {
+                        handleRecipeClick(card, r);
+                    }
+                };
 
                 // --- HTML Content ---
                 // We add an <a> tag wrapping the image or a specific view button

@@ -9,18 +9,28 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
-import com.david.NUTRITION_TRACNKER.service.CustomUserDetailsService;
 import com.david.NUTRITION_TRACNKER.service.oauth2.CustomOAuth2UserService;
+import com.david.NUTRITION_TRACNKER.security.JwtAuthenticationFilter;
+import com.david.NUTRITION_TRACNKER.security.CustomAuthenticationSuccessHandler;
+import com.david.NUTRITION_TRACNKER.security.OAuth2AuthenticationSuccessHandler;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
     @Autowired
-    private CustomUserDetailsService userDetailsService;
+    private CustomOAuth2UserService customOAuth2UserService;
 
     @Autowired
-    private CustomOAuth2UserService customOAuth2UserService;
+    private JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    @Autowired
+    private CustomAuthenticationSuccessHandler customAuthenticationSuccessHandler;
+
+    @Autowired
+    private OAuth2AuthenticationSuccessHandler oauth2AuthenticationSuccessHandler;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -65,27 +75,31 @@ public class SecurityConfig {
 
                 .anyRequest().authenticated()
         )
+                .sessionManagement(session -> session
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
                 .formLogin(form -> form
                 .loginPage("/login")
                 .loginProcessingUrl("/authenticateTheUser")
                 .usernameParameter("username")
                 .passwordParameter("password")
-                .defaultSuccessUrl("/", true)
+                .successHandler(customAuthenticationSuccessHandler)
                 .permitAll()
                 )
                 .oauth2Login(oauth2 -> oauth2
                 .loginPage("/login")
                 .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
-                .defaultSuccessUrl("/", true)
+                .successHandler(oauth2AuthenticationSuccessHandler)
                 )
                 .logout(logout -> logout
                 .logoutUrl("/logout")
                 .logoutSuccessUrl("/login?logout")
-                .invalidateHttpSession(true)
-                .deleteCookies("JSESSIONID")
+                .deleteCookies("accessToken", "refreshToken", "JSESSIONID")
                 .permitAll()
                 )
-                .csrf(csrf -> csrf.disable()); 
+                .csrf(csrf -> csrf.disable());
+
+        http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
